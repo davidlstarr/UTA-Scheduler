@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV to Excel Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    h1 { color: #2c3e50; }
+    .converter {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .info {
+      background: #e8f4f8;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+  </style>
+  <script src="vendor/xlsx.full.min.js"></script>
+</head>
+<body>
+  <h1>CSV to Excel Converter</h1>
+  <p>Convert your CSV example files to Excel format for testing.</p>
+  
+  <div class="converter">
+    <h3>Convert CSV to Excel</h3>
+    <input type="file" id="csvFile" accept=".csv" />
+    <br>
+    <button onclick="convertToExcel()">Convert to Excel</button>
+  </div>
+
+  <div class="info">
+    <strong>Instructions:</strong>
+    <ol>
+      <li>Select a CSV file (e.g., example_scheduler.csv or example_recall_roster.csv)</li>
+      <li>Click "Convert to Excel"</li>
+      <li>The Excel file will download automatically</li>
+    </ol>
+  </div>
+
+  <script>
+    function convertToExcel() {
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select a CSV file first');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          // Read CSV text
+          const csvText = e.target.result;
+          const lines = csvText.split('\n').filter(line => line.trim());
+          
+          // Parse CSV
+          const data = [];
+          lines.forEach((line, index) => {
+            const values = line.split(',').map(v => v.trim());
+            data.push(values);
+          });
+
+          // Create workbook
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(data);
+          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+          // Generate filename
+          const filename = file.name.replace('.csv', '.xlsx');
+
+          // Download
+          XLSX.writeFile(wb, filename);
+          alert('Excel file downloaded: ' + filename);
+        } catch (error) {
+          alert('Error converting file: ' + error.message);
+          console.error(error);
+        }
+      };
+      
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
+

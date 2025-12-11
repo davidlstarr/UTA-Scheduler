@@ -1,0 +1,20 @@
+Name,Date,StartTime,EndTime,Type,Title,Location,Notes
+John Doe,2024-01-15,08:00,09:00,task,EPB Review Session,Supervisor Office,Annual Performance Review
+John Doe,2024-01-15,09:30,10:30,task,EPB Documentation,Office,Complete EPR forms
+John Doe,2024-01-15,11:00,12:00,mandatory,EPB Feedback Meeting,Conference Room,Commander feedback
+Jane Smith,2024-01-15,08:30,09:30,task,EPB Review Session,Supervisor Office,Annual Performance Review
+Jane Smith,2024-01-15,10:00,11:00,task,EPB Documentation,Office,Complete EPR forms
+Jane Smith,2024-01-15,13:30,14:30,mandatory,EPB Feedback Meeting,Conference Room,Commander feedback
+Mike Johnson,2024-01-15,09:00,10:00,task,EPB Review Session,Supervisor Office,Annual Performance Review
+Mike Johnson,2024-01-15,10:30,11:30,task,EPB Documentation,Office,Complete EPR forms
+Mike Johnson,2024-01-15,14:00,15:00,mandatory,EPB Feedback Meeting,Conference Room,Commander feedback
+Sarah Williams,2024-01-16,08:00,09:00,task,EPB Review Session,Supervisor Office,Annual Performance Review
+Sarah Williams,2024-01-16,09:30,10:30,task,EPB Documentation,Office,Complete EPR forms
+Sarah Williams,2024-01-16,11:00,12:00,mandatory,EPB Feedback Meeting,Conference Room,Commander feedback
+David Martinez,2024-01-16,08:30,09:30,task,EPB Review Session,Supervisor Office,Annual Performance Review
+David Martinez,2024-01-16,10:00,11:00,task,EPB Documentation,Office,Complete EPR forms
+David Martinez,2024-01-16,13:30,14:30,mandatory,EPB Feedback Meeting,Conference Room,Commander feedback
+Emily Chen,2024-01-16,09:00,10:00,task,EPB Review Session,Supervisor Office,Annual Performance Review
+Emily Chen,2024-01-16,10:30,11:30,task,EPB Documentation,Office,Complete EPR forms
+Emily Chen,2024-01-16,14:00,15:00,mandatory,EPB Feedback Meeting,Conference Room,Commander feedback
+

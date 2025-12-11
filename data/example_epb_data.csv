@@ -1,0 +1,11 @@
+Ratee Name,Rank or Grade,Evaluation Reason,Evaluation Created Date,Review Period Start Date,Evaluation Closeout Date,Review Period End Date,Coordination Status,# Days in Coordination,Assigned To
+John Doe,SSgt,Annual,2024-01-15,2023-10-01,2024-01-15,2024-03-31,Complete,30,MSgt Brown
+Jane Smith,TSgt,Annual,2024-01-15,2023-10-01,2024-01-15,2024-03-31,Complete,28,MSgt Davis
+Mike Johnson,SrA,Annual,2024-01-15,2023-10-01,2024-01-20,2024-03-31,In Progress,35,SSgt Smith
+Sarah Williams,SSgt,Annual,2024-01-16,2023-10-01,2024-01-16,2024-03-31,Complete,30,MSgt Brown
+David Martinez,TSgt,Annual,2024-01-16,2023-10-01,2024-01-16,2024-03-31,Complete,28,MSgt Davis
+Emily Chen,SrA,Annual,2024-01-16,2023-10-01,2024-01-22,2024-03-31,In Progress,38,SSgt Wilson
+Robert Taylor,A1C,Annual,2024-01-17,2023-10-01,2024-01-25,2024-03-31,Pending,42,TSgt Anderson
+Lisa Garcia,SSgt,Annual,2024-01-17,2023-10-01,2024-01-17,2024-03-31,Complete,30,MSgt Brown
+James Wilson,TSgt,Annual,2024-01-17,2023-10-01,2024-01-17,2024-03-31,Complete,28,MSgt Davis
+Patricia Lee,SrA,Annual,2024-01-17,2023-10-01,2024-01-24,2024-03-31,In Progress,40,SSgt Martinez

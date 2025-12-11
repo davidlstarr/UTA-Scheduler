@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTA Tools</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>UTA Tools</h1>
+      <nav class="tab-navigation">
+        <button id="overview-tab" class="tab-button">Overview</button>
+        <button id="scheduler-tab" class="tab-button active">Scheduler</button>
+        <button id="recall-roster-tab" class="tab-button">Recall Roster</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Overview Section -->
+      <section id="overview-section" class="tab-section">
+        <div class="card">
+          <h2>Data Overview</h2>
+          <div id="overview-content" class="overview-container">
+            <p>No data loaded yet. Upload files in the Scheduler tab to see statistics.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- UTA Scheduler Section -->
+      <section id="scheduler-section" class="tab-section active">
+        <div class="card">
+          <h2>UTA Scheduler</h2>
+          <div class="upload-container">
+            <label for="scheduler-file" class="file-label">
+              <span>Upload Excel/CSV Files (Multiple)</span>
+              <input type="file" id="scheduler-file" accept=".xlsx,.xls,.csv" multiple />
+            </label>
+          </div>
+          <div id="uploaded-files" class="uploaded-files-container"></div>
+          <div class="manual-entry-container">
+            <h3>Add Event Manually</h3>
+            <form id="manual-event-form" class="manual-event-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="manual-event">Event</label>
+                  <input type="text" id="manual-event" placeholder="e.g., Roll Call" required />
+                </div>
+                <div class="form-group">
+                  <label for="manual-time">Time (Optional)</label>
+                  <input type="text" id="manual-time" placeholder="e.g., 07:00-07:30 or 0700-0730" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="manual-type">Type</label>
+                  <select id="manual-type">
+                    <option value="task">Task</option>
+                    <option value="mandatory">Mandatory</option>
+                    <option value="appointment">Appointment</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="manual-location">Location</label>
+                  <input type="text" id="manual-location" placeholder="e.g., Squadron Room" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="manual-name">Name (Optional)</label>
+                  <input type="text" id="manual-name" placeholder="e.g., John Doe" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="width: 100%;">
+                  <label for="manual-notes">Notes (Optional)</label>
+                  <input type="text" id="manual-notes" placeholder="Additional notes or details" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="add-event-button">Add Event</button>
+                <button type="button" id="clear-form-button" class="clear-form-button">Clear</button>
+              </div>
+            </form>
+          </div>
+          <div class="view-toggle-container">
+            <label class="view-toggle-label">
+              <input type="radio" name="schedule-view" value="individual" checked />
+              <span>Individual Schedule</span>
+            </label>
+            <label class="view-toggle-label">
+              <input type="radio" name="schedule-view" value="overall" />
+              <span>Overall Schedule</span>
+            </label>
+          </div>
+          <div class="controls-container">
+            <select id="airman-select" class="airman-select" disabled>
+              <option value="">Select an Airman...</option>
+            </select>
+            <button id="generate-schedule" class="generate-button" disabled>
+              Generate Schedule
+            </button>
+            <button id="print-schedule" class="print-button" disabled>
+              🖨️ Print Schedule
+            </button>
+          </div>
+          <div id="timeline" class="timeline-container"></div>
+          <div id="general-list" class="general-list-container"></div>
+          <div id="summary" class="summary-container"></div>
+        </div>
+      </section>
+
+      <!-- Recall Roster Section -->
+      <section id="recall-roster-section" class="tab-section">
+        <div class="card">
+          <h2>Recall Roster Diagram Builder</h2>
+          <div class="upload-container">
+            <label for="roster-file" class="file-label">
+              <span>Upload Excel/CSV File</span>
+              <input type="file" id="roster-file" accept=".xlsx,.xls,.csv" />
+            </label>
+          </div>
+          <div class="controls-container">
+            <button id="generate-roster" class="generate-button" disabled>
+              Generate Diagram
+            </button>
+          </div>
+          <div id="diagram" class="diagram-container"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p id="status-message">Ready</p>
+    </footer>
+
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script src="vendor/mermaid.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+Name,Phone,Supervisor
+CC Jones,555-0001,
+MSgt Brown,555-1111,CC Jones
+MSgt Davis,555-2222,CC Jones
+SSgt Smith,555-3333,MSgt Brown
+SSgt Wilson,555-4444,MSgt Brown
+SSgt Martinez,555-5555,MSgt Davis
+TSgt Anderson,555-6666,SSgt Smith
+TSgt Taylor,555-7777,SSgt Smith
+TSgt White,555-8888,SSgt Wilson
+SrA Johnson,555-9999,TSgt Anderson
+SrA Williams,555-1010,TSgt Anderson
+SrA Garcia,555-2020,TSgt Taylor
+A1C Miller,555-3030,SrA Johnson
+A1C Davis,555-4040,SrA Williams
+
