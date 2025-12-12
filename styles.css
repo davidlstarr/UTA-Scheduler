@@ -810,20 +810,26 @@ main {
   border: none;
   color: white;
   cursor: pointer;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
   transition: background-color 0.2s, transform 0.1s;
-  line-height: 1;
+  line-height: 1.2;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .delete-event-btn:hover {
   background-color: #c0392b;
-  transform: scale(1.1);
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .delete-event-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .schedule-person-group {
@@ -977,20 +983,26 @@ main {
   border: none;
   color: white;
   cursor: pointer;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
   transition: background-color 0.2s, transform 0.1s;
-  line-height: 1;
+  line-height: 1.2;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .delete-event-btn:hover {
   background-color: #c0392b;
-  transform: scale(1.1);
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .delete-event-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .schedule-person-group {

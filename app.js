@@ -418,7 +418,8 @@ function addManualEvent() {
   }
 
   // Determine item type based on whether it has times
-  // If it has times, it's an event; if not, it's a general item
+  // Manual events are always treated as events (even without times), so they appear in the schedule
+  // Only non-manual items without times are classified as general items
   const startTimeParsed = startTime ? parseTime(startTime) : null;
   const endTimeParsed = endTime ? parseTime(endTime) : null;
   
@@ -431,9 +432,9 @@ function addManualEvent() {
     }
   }
   
-  // If there's a time error, show it but still allow adding as general item
+  // If there's a time error, show it but still allow adding as an event
   if (timeError) {
-    updateStatus(timeError + " Adding as general item without time.");
+    updateStatus(timeError + " Adding as event without time.");
   }
   
   // Consider it an event if there's a valid start time (end time is optional)
@@ -443,6 +444,7 @@ function addManualEvent() {
     startTimeParsed !== null;
 
   // Create normalized event object
+  // Manual events are always classified as "event" so they appear in the schedule table
   const manualEvent = {
     Name: name,
     Date: "", // Manual events don't have dates by default
@@ -454,7 +456,7 @@ function addManualEvent() {
     Notes: notes || "Manually entered", // Use provided notes or default
     _isManual: true, // Flag to identify manual events
     _manualEventId: Date.now() + Math.random(), // Unique ID for manual events
-    itemType: hasValidTime ? "event" : "general", // Pre-classify the item type
+    itemType: "event", // Manual events are always events so they show in the schedule table
   };
 
   // Add to manual events array
@@ -475,7 +477,6 @@ function addManualEvent() {
     generateButtonEl.disabled = schedulerData.length === 0;
     
     // Provide clear success message
-    const itemTypeLabel = hasValidTime ? "scheduled event" : "general item";
     const nameLabel = name ? ` for ${name}` : " (for everyone)";
     
     // Format time for display (HH:MM format)
@@ -489,12 +490,14 @@ function addManualEvent() {
         const endMinutes = String(endTimeParsed.minutes).padStart(2, "0");
         timeLabel += `-${endHours}:${endMinutes}`;
       }
+    } else {
+      timeLabel = " (no time specified)";
     }
     
     if (!timeError) {
-      updateStatus(`✓ ${itemTypeLabel.charAt(0).toUpperCase() + itemTypeLabel.slice(1)} added: "${event}"${nameLabel}${timeLabel}`);
+      updateStatus(`✓ Event added: "${event}"${nameLabel}${timeLabel}`);
     } else {
-      updateStatus(`✓ General item added: "${event}"${nameLabel} (time ignored due to invalid format)`);
+      updateStatus(`✓ Event added: "${event}"${nameLabel} (time ignored due to invalid format)`);
     }
     
     // Update overview if on that tab
@@ -1329,7 +1332,7 @@ function renderScheduleTable(events, container) {
             <th>Type</th>
             <th>Location</th>
             <th>Notes</th>
-            <th>Actions</th>
+            <th style="min-width: 100px;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -1344,8 +1347,20 @@ function renderScheduleTable(events, container) {
     const type = (event.Type || "task").toLowerCase();
     const location = escapeHtml(event.Location || "");
     const notes = escapeHtml(event.Notes || "");
-    const canDelete = event._isManual || event._manualEventId; // Only manual events can be deleted
+    // Check if this is a manual event that can be deleted
+    // Manual events always have _isManual flag set to true
+    const isManual = !!event._isManual;
     const eventId = event._manualEventId || `event-${index}`;
+    
+    // Store event data for deletion - use the actual _isManual value from the event
+    const eventData = JSON.stringify({
+      eventId,
+      isManual: !!event._isManual, // Use the actual flag from the event, not the calculated value
+      title: event.Title,
+      name: event.Name,
+      _isManual: event._isManual,
+      _manualEventId: event._manualEventId
+    });
 
     html += `
       <tr class="schedule-table-row schedule-table-row-${type}" data-event-id="${eventId}">
@@ -1355,8 +1370,8 @@ function renderScheduleTable(events, container) {
         <td><span class="type-badge type-${type}">${type}</span></td>
         <td>${location}</td>
         <td>${notes}</td>
-        <td>
-          ${canDelete ? `<button class="delete-event-btn" data-event-id="${eventId}" title="Remove event">🗑️</button>` : ''}
+        <td style="text-align: center;">
+          <button class="delete-event-btn" data-event-id="${eventId}" data-is-manual="${isManual}" data-event-data='${escapeHtml(eventData)}' title="${isManual ? 'Remove this event' : 'Remove this event from schedule'}">🗑️ Delete</button>
         </td>
       </tr>
     `;
@@ -1369,6 +1384,20 @@ function renderScheduleTable(events, container) {
   `;
 
   container.innerHTML = html;
+
+  // Add event listeners for delete buttons
+  container.querySelectorAll('.delete-event-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const eventId = btn.getAttribute('data-event-id');
+      const isManual = btn.getAttribute('data-is-manual') === 'true';
+      const eventData = btn.getAttribute('data-event-data');
+      console.log('Delete button clicked:', { eventId, isManual, eventData, manualEventsCount: manualEvents.length });
+      // Pass the button element so we can access event data if needed
+      removeEvent(eventId, isManual, btn);
+    });
+  });
 }
 
 /**
@@ -1424,8 +1453,20 @@ function renderOverallScheduleTable(events, container) {
     const type = (event.Type || "task").toLowerCase();
     const location = escapeHtml(event.Location || "");
     const notes = escapeHtml(event.Notes || "");
-    const canDelete = event._isManual || event._manualEventId; // Only manual events can be deleted
+    // Check if this is a manual event that can be deleted
+    // Manual events always have _isManual flag set to true
+    const isManual = !!event._isManual;
     const eventId = event._manualEventId || `event-${index}`;
+    
+    // Store event data for deletion - use the actual _isManual value from the event
+    const eventData = JSON.stringify({
+      eventId,
+      isManual: !!event._isManual, // Use the actual flag from the event, not the calculated value
+      title: event.Title,
+      name: event.Name,
+      _isManual: event._isManual,
+      _manualEventId: event._manualEventId
+    });
 
     html += `
       <tr class="schedule-table-row schedule-table-row-${type}" data-event-id="${eventId}">
@@ -1436,8 +1477,8 @@ function renderOverallScheduleTable(events, container) {
         <td><span class="type-badge type-${type}">${type}</span></td>
         <td>${location}</td>
         <td>${notes}</td>
-        <td>
-          ${canDelete ? `<button class="delete-event-btn" data-event-id="${eventId}" title="Remove event">🗑️</button>` : ''}
+        <td style="text-align: center;">
+          <button class="delete-event-btn" data-event-id="${eventId}" data-is-manual="${isManual}" data-event-data='${escapeHtml(eventData)}' title="${isManual ? 'Remove this event' : 'Remove this event from schedule'}">🗑️ Delete</button>
         </td>
       </tr>
     `;
@@ -1454,64 +1495,130 @@ function renderOverallScheduleTable(events, container) {
   // Add event listeners for delete buttons
   container.querySelectorAll('.delete-event-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const eventId = btn.getAttribute('data-event-id');
-      removeEvent(eventId);
+      const isManual = btn.getAttribute('data-is-manual') === 'true';
+      const eventData = btn.getAttribute('data-event-data');
+      console.log('Delete button clicked:', { eventId, isManual, eventData, manualEventsCount: manualEvents.length });
+      // Pass the button element so we can access event data if needed
+      removeEvent(eventId, isManual, btn);
     });
   });
 }
 
 /**
- * Remove an event (manual events only)
+ * Remove an event (manual events only, or hide events from uploaded files)
  * @param {string} eventId - The unique ID of the event to remove
+ * @param {boolean} isManual - Whether this is a manual event
+ * @param {HTMLElement} btn - The button element that triggered the delete (for fallback search)
  */
-function removeEvent(eventId) {
-  if (!eventId) return;
-
-  // Find and remove the manual event
-  // Handle both string and number comparisons for the ID
-  const eventIndex = manualEvents.findIndex(e => {
-    if (!e._isManual && !e._manualEventId) return false;
-    // Compare as strings to handle both number and string IDs
-    return String(e._manualEventId) === String(eventId);
-  });
-
-  if (eventIndex === -1) {
-    updateStatus("Event not found or cannot be removed");
+function removeEvent(eventId, isManual = true, btn = null) {
+  if (!eventId) {
+    updateStatus("✗ Error: Event ID not provided");
+    console.error("removeEvent called without eventId");
     return;
   }
 
-  const removedEvent = manualEvents[eventIndex];
-  manualEvents.splice(eventIndex, 1);
+  console.log("removeEvent called:", { eventId, isManual, manualEventsCount: manualEvents.length, manualEvents: manualEvents.map(e => ({ id: e._manualEventId, title: e.Title, _isManual: e._isManual })) });
 
-  // Rebuild combined data
-  rebuildCombinedData();
+  // First, try to find the event by ID
+  let eventIndex = manualEvents.findIndex(e => {
+    if (!e._isManual) return false;
+    if (e._manualEventId) {
+      return String(e._manualEventId) === String(eventId);
+    }
+    return false;
+  });
 
-  // Save to localStorage
-  savePersistedData();
+  console.log("Event index found by ID:", eventIndex);
 
-  // Update UI
-  const airmanSelect = document.getElementById("airman-select");
-  const generateButton = document.getElementById("generate-schedule");
-  populateAirmanDropdown(schedulerData, airmanSelect);
-  airmanSelect.disabled = schedulerData.length === 0;
-  generateButton.disabled = schedulerData.length === 0;
-
-  updateStatus(`Event removed: ${removedEvent.Title || 'Untitled'}`);
-
-  // Regenerate the current view
-  const viewType = document.querySelector('input[name="schedule-view"]:checked')?.value || "individual";
-  if (viewType === "overall") {
-    generateOverallSchedule();
-  } else {
-    if (airmanSelect.value) {
-      generateButton.click();
+  // If not found by ID, try fallback search by title and name
+  if (eventIndex === -1) {
+    console.log("Trying fallback search by event properties...");
+    console.log("All manual events:", manualEvents.map(e => ({ title: e.Title, name: e.Name, _isManual: e._isManual, _manualEventId: e._manualEventId })));
+    
+    // Get event details from the button's data attribute if available
+    const eventDataAttr = btn?.getAttribute('data-event-data');
+    console.log("Event data attribute:", eventDataAttr);
+    if (eventDataAttr) {
+      try {
+        const eventData = JSON.parse(eventDataAttr);
+        console.log("Searching for event with data:", eventData);
+        eventIndex = manualEvents.findIndex(e => {
+          console.log("Checking event:", { 
+            eTitle: e.Title, 
+            eName: e.Name,
+            eIsManual: e._isManual,
+            searchTitle: eventData.title, 
+            searchName: eventData.name
+          });
+          if (!e._isManual) {
+            console.log("Skipping - not manual");
+            return false;
+          }
+          const titleMatch = e.Title === eventData.title;
+          const nameMatch = (e.Name || '') === (eventData.name || '');
+          console.log("Match results:", { titleMatch, nameMatch, bothMatch: titleMatch && nameMatch });
+          return titleMatch && nameMatch;
+        });
+        
+        if (eventIndex !== -1) {
+          console.log("Found event using fallback search at index:", eventIndex);
+        } else {
+          console.log("Event not found in fallback search");
+        }
+      } catch (err) {
+        console.error("Error parsing event data:", err);
+      }
+    } else {
+      console.log("No event data attribute found on button");
     }
   }
 
-  // Update overview if on that tab
-  const overviewSection = document.getElementById("overview-section");
-  if (overviewSection && overviewSection.classList.contains("active")) {
-    updateOverview();
+  // If we found the event, delete it
+  if (eventIndex !== -1) {
+
+    const removedEvent = manualEvents[eventIndex];
+    manualEvents.splice(eventIndex, 1);
+    
+    // Rebuild combined data
+    rebuildCombinedData();
+
+    // Save to localStorage
+    savePersistedData();
+
+    // Update UI
+    const airmanSelect = document.getElementById("airman-select");
+    const generateButton = document.getElementById("generate-schedule");
+    populateAirmanDropdown(schedulerData, airmanSelect);
+    airmanSelect.disabled = schedulerData.length === 0;
+    generateButton.disabled = schedulerData.length === 0;
+
+    updateStatus(`✓ Event removed: ${removedEvent.Title || 'Untitled'}`);
+
+    // Regenerate the current view
+    const viewType = document.querySelector('input[name="schedule-view"]:checked')?.value || "individual";
+    if (viewType === "overall") {
+      generateOverallSchedule();
+    } else {
+      if (airmanSelect.value) {
+        generateButton.click();
+      }
+    }
+
+    // Update overview if on that tab
+    const overviewSection = document.getElementById("overview-section");
+    if (overviewSection && overviewSection.classList.contains("active")) {
+      updateOverview();
+    }
+  } else {
+    // Event not found - could be from uploaded file or doesn't exist
+    if (isManual) {
+      updateStatus("✗ Error: Manual event not found. Please try refreshing the page.");
+    } else {
+      updateStatus("✗ Events from uploaded files cannot be deleted individually. Remove the file to remove all its events.");
+    }
   }
 }
 
@@ -1700,7 +1807,7 @@ function renderGeneralList(events, container) {
           <td><span class="type-badge type-${type}">${type}</span></td>
           <td>${notes}</td>
           <td>
-            ${canDelete ? `<button class="delete-event-btn" data-event-id="${eventId}" title="Remove item">🗑️</button>` : ''}
+            ${canDelete ? `<button class="delete-event-btn" data-event-id="${eventId}" title="Remove this item">🗑️ Delete</button>` : '<span style="color: #95a5a6; font-size: 0.85rem;">From file</span>'}
           </td>
         </tr>
       `;
@@ -1797,8 +1904,13 @@ function renderGeneralList(events, container) {
   // Add event listeners for delete buttons in general items
   container.querySelectorAll('.delete-event-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const eventId = btn.getAttribute('data-event-id');
-      removeEvent(eventId);
+      const isManual = btn.getAttribute('data-is-manual') === 'true';
+      const eventData = btn.getAttribute('data-event-data');
+      console.log('Delete button clicked (general items):', { eventId, isManual, eventData, manualEventsCount: manualEvents.length });
+      removeEvent(eventId, isManual, btn);
     });
   });
 }
