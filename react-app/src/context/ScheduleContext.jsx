@@ -11,21 +11,20 @@ export const useSchedule = () => {
 };
 
 export const ScheduleProvider = ({ children }) => {
-  const [events, setEvents] = useState([]);
-  const [people, setPeople] = useState([]);
+  // Initialize state from localStorage
+  const [events, setEvents] = useState(() => {
+    const saved = localStorage.getItem("uta-events");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [people, setPeople] = useState(() => {
+    const saved = localStorage.getItem("uta-people");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedPerson, setSelectedPerson] = useState(null);
-  const [recallRosterData, setRecallRosterData] = useState(null);
-
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const savedEvents = localStorage.getItem("uta-events");
-    const savedPeople = localStorage.getItem("uta-people");
-    const savedRecallRoster = localStorage.getItem("uta-recall-roster");
-
-    if (savedEvents) setEvents(JSON.parse(savedEvents));
-    if (savedPeople) setPeople(JSON.parse(savedPeople));
-    if (savedRecallRoster) setRecallRosterData(JSON.parse(savedRecallRoster));
-  }, []);
+  const [recallRosterData, setRecallRosterData] = useState(() => {
+    const saved = localStorage.getItem("uta-recall-roster");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   // Save data to localStorage when it changes
   useEffect(() => {
@@ -42,6 +41,8 @@ export const ScheduleProvider = ({ children }) => {
         "uta-recall-roster",
         JSON.stringify(recallRosterData)
       );
+    } else {
+      localStorage.removeItem("uta-recall-roster");
     }
   }, [recallRosterData]);
 

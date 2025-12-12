@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, BarChart3, Users } from "lucide-react";
+import { Calendar, BarChart3, Users, UserCheck } from "lucide-react";
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -9,6 +9,7 @@ const Layout = ({ children }) => {
     { name: "Dashboard", href: "/", icon: BarChart3 },
     { name: "Schedule", href: "/schedule", icon: Calendar },
     { name: "Recall Roster", href: "/recall-roster", icon: Users },
+    { name: "Manning", href: "/manning", icon: UserCheck },
   ];
 
   const isActive = (href) => {

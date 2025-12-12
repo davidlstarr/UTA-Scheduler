@@ -13,18 +13,28 @@ import {
   Edit,
   Printer,
   Settings,
+  CheckCircle,
 } from "lucide-react";
 import FileUpload from "../components/FileUpload";
 import AddEventModal from "../components/AddEventModal";
 import PersonFilter from "../components/PersonFilter";
 
 const Schedule = () => {
-  const { events, selectedPerson, people, removeEvent } = useSchedule();
+  const {
+    events,
+    selectedPerson,
+    people,
+    removeEvent,
+    updateEvent,
+    clearAllData,
+  } = useSchedule();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [viewMode, setViewMode] = useState("detailed"); // 'detailed' or 'overview'
   const [showPrintSettings, setShowPrintSettings] = useState(false);
+  const [editingEventId, setEditingEventId] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
   const [printHeader, setPrintHeader] = useState({
     utaWeekend: "",
     fiscalYear: new Date().getFullYear(),
@@ -34,6 +44,30 @@ const Schedule = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const startEditing = (event) => {
+    setEditingEventId(event.id);
+    setEditFormData({
+      title: event.title || "",
+      person: event.person || "",
+      date: event.date || "",
+      time: event.time || "",
+      location: event.location || "",
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingEventId(null);
+    setEditFormData({});
+  };
+
+  const saveEdit = () => {
+    if (editingEventId) {
+      updateEvent(editingEventId, editFormData);
+      setEditingEventId(null);
+      setEditFormData({});
+    }
   };
 
   // Load print header from localStorage
@@ -225,6 +259,27 @@ const Schedule = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add Event
           </button>
+          {events.length > 0 && (
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Are you sure you want to clear all schedule data? This will remove all events and cannot be undone."
+                  )
+                ) {
+                  clearAllData();
+                  setEditingEventId(null);
+                  setEditFormData({});
+                  setSelectedDate("");
+                  setViewMode("detailed");
+                }
+              }}
+              className="btn-secondary flex items-center print:hidden text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Clear Data
+            </button>
+          )}
         </div>
       </div>
 
@@ -484,59 +539,182 @@ const Schedule = () => {
                       key={event.id}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(event.date)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {event.title}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {event.person || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {event.time || "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {event.location || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            event.type === "scheduler"
-                              ? "bg-blue-100 text-blue-800"
-                              : event.type === "epb"
-                              ? "bg-purple-100 text-purple-800"
-                              : event.isManual
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {event.type === "scheduler"
-                            ? "Scheduler"
-                            : event.type === "epb"
-                            ? "EPB"
-                            : event.isManual
-                            ? "Manual"
-                            : "Other"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium print:hidden">
-                        <button
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Are you sure you want to delete "${event.title}"?`
-                              )
-                            ) {
-                              removeEvent(event.id);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-900 transition-colors"
-                          title="Delete event"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
+                      {editingEventId === event.id ? (
+                        // Edit mode
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="date"
+                              value={editFormData.date || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  date: e.target.value,
+                                })
+                              }
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <input
+                              type="text"
+                              value={editFormData.title || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  title: e.target.value,
+                                })
+                              }
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editFormData.person || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  person: e.target.value,
+                                })
+                              }
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editFormData.time || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  time: e.target.value,
+                                })
+                              }
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                              placeholder="e.g., 0900-1700"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <input
+                              type="text"
+                              value={editFormData.location || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  location: e.target.value,
+                                })
+                              }
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                event.type === "scheduler"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : event.type === "epb"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : event.isManual
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {event.type === "scheduler"
+                                ? "Scheduler"
+                                : event.type === "epb"
+                                ? "EPB"
+                                : event.isManual
+                                ? "Manual"
+                                : "Other"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium print:hidden">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={saveEdit}
+                                className="text-green-600 hover:text-green-900 transition-colors"
+                                title="Save"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={cancelEditing}
+                                className="text-gray-600 hover:text-gray-900 transition-colors"
+                                title="Cancel"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        // View mode
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDate(event.date)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {event.title}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {event.person || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {event.time || "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {event.location || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                event.type === "scheduler"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : event.type === "epb"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : event.isManual
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {event.type === "scheduler"
+                                ? "Scheduler"
+                                : event.type === "epb"
+                                ? "EPB"
+                                : event.isManual
+                                ? "Manual"
+                                : "Other"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium print:hidden">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => startEditing(event)}
+                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                                title="Edit event"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      `Are you sure you want to delete "${event.title}"?`
+                                    )
+                                  ) {
+                                    removeEvent(event.id);
+                                  }
+                                }}
+                                className="text-red-600 hover:text-red-900 transition-colors"
+                                title="Delete event"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))
                 )}

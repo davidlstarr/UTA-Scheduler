@@ -1,0 +1,66 @@
+Position Title,AFSC,GR,Q1,Q2,Q3,Q4,Q5,POS-NR,SAR,FAC,PEC,SEI,PRP,RPI,MP-RMKS,Authorized,Assigned,DAFSC,Assigned GR,Assigned Name,SSAN,DS,CAFSC,PAFSC,2AFSC,3AFSC,4AFSC,OVERAGE,AFR-SEC-ID,BRANCH,Duty Title,Remarks,Exp Date,Critical,Office
+Commander,21AX,Lt Col,1,1,1,1,1,1234567AB,5,CMD,12345,,,,,1,1,21AX,Lt Col,Jones,***-**-1234,A,21AX,21AX,,,,,01,Command Section,Commander,,Yes,Command Section
+Executive Officer,21AX,Maj,1,1,1,1,1,1234568AB,5,CMD,12345,,,,,1,0,,,,,,,,,,,,01,Command Section,Executive Officer,,Yes,Command Section
+First Sergeant,8F000,CMSgt,1,1,1,1,1,1234569AB,6,CMD,12345,,,,,1,1,8F000,CMSgt,Tester,***-**-1235,A,8F000,8F000,,,,,01,Command Section,First Sergeant,,Yes,Command Section
+Command Chief,00000,CMSgt,1,1,1,1,1,1234570AB,5,CMD,12345,,,,,1,1,00000,CMSgt,Williams,***-**-1236,A,00000,00000,,,,,01,Command Section,Command Chief,,Yes,Command Section
+Executive Assistant,3F5X1,TSgt,1,1,1,1,1,1234571AB,6,CMD,12345,,,,,1,1,3F5X1,TSgt,Roberts,***-**-1237,A,3F5X1,3F5X1,,,,,01,Command Section,Executive Assistant,,No,Command Section
+Unit Training Manager,3F2X1,MSgt,1,1,1,1,1,1234572AB,6,OPS,12346,,UTM,,,1,1,3F2X1,MSgt,Davis,***-**-1238,A,3F2X1,3F2X1,,,,,02,Operations,Unit Training Manager,,Yes,Operations
+Operations Officer,21AX,Maj,1,1,1,1,1,1234573AB,5,OPS,12346,,,,,1,1,21AX,Maj,Martinez,***-**-1239,A,21AX,21AX,,,,,02,Operations,Operations Officer,,Yes,Operations
+Deputy Operations Officer,21AX,Capt,1,1,1,1,1,1234574AB,6,OPS,12346,,,,,1,1,21AX,Capt,Anderson,***-**-1240,A,21AX,21AX,,,,,02,Operations,Deputy Operations Officer,,No,Operations
+Operations Superintendent,2R0X1,SMSgt,1,1,1,1,1,1234575AB,6,OPS,12346,,,,,1,1,2R0X1,SMSgt,Brown,***-**-1241,A,2R0X1,2R0X1,,,,,02,Operations,Operations Superintendent,,Yes,Operations
+Operations NCO,2R0X1,MSgt,1,1,1,1,1,1234576AB,6,OPS,12346,,,,,2,2,2R0X1,MSgt,Thompson,***-**-1242,A,2R0X1,2R0X1,,,,,02,Operations,Operations NCO,,No,Operations
+Operations NCO,2R0X1,TSgt,1,1,1,1,1,1234577AB,6,OPS,12346,,,,,1,1,2R0X1,TSgt,Wilson,***-**-1243,A,2R0X1,2R0X1,,,,,02,Operations,Operations NCO,,No,Operations
+Scheduler,3F5X1,SSgt,1,1,1,1,1,1234578AB,6,OPS,12346,,,,,2,1,3F5X1,SSgt,Garcia,***-**-1244,A,3F5X1,3F5X1,,,,,02,Operations,Scheduler,,No,Operations
+Training Specialist,3F2X1,TSgt,1,1,1,1,1,1234579AB,6,OPS,12346,,,,,2,2,3F2X1,TSgt,Miller,***-**-1245,A,3F2X1,3F2X1,,,,,02,Operations,Training Specialist,,No,Operations
+Training Specialist,3F2X1,SSgt,1,1,1,1,1,1234580AB,6,OPS,12346,,,,,1,1,3F2X1,SSgt,Johnson,***-**-1246,A,3F2X1,3F2X1,,,,,02,Operations,Training Specialist,,No,Operations
+Personnel Officer,38FX,Capt,1,1,1,1,1,1234581AB,6,PER,12347,,,,,1,0,,,,,,,,,,,,03,Personnel,Personnel Officer,,Yes,Personnel
+Personnel Superintendent,3F0X1,MSgt,1,1,1,1,1,1234582AB,6,PER,12347,,,,,1,1,3F0X1,MSgt,Smith,***-**-1247,A,3F0X1,3F0X1,,,,,03,Personnel,Personnel Superintendent,,No,Personnel
+Personnel Specialist,3F0X1,TSgt,1,1,1,1,1,1234583AB,6,PER,12347,,,,,2,2,3F0X1,TSgt,Jackson,***-**-1248,A,3F0X1,3F0X1,,,,,03,Personnel,Personnel Specialist,,No,Personnel
+Personnel Specialist,3F0X1,SSgt,1,1,1,1,1,1234584AB,6,PER,12347,,,,,3,2,3F0X1,SSgt,Lee,***-**-1249,A,3F0X1,3F0X1,,,,,03,Personnel,Personnel Specialist,,No,Personnel
+Personnel Specialist,3F0X1,SrA,1,1,1,1,1,1234585AB,6,PER,12347,,,,,2,3,3F0X1,SrA,Harris,***-**-1250,A,3F0X1,3F0X1,,,,3,03,Personnel,Personnel Specialist,RET: 30 JUN 26,,No,Personnel
+Career Assistance Advisor,3F5X1,MSgt,1,1,1,1,1,1234586AB,6,PER,12347,,CAA,,,1,1,3F5X1,MSgt,Martin,***-**-1251,A,3F5X1,3F5X1,,,,,03,Personnel,Career Assistance Advisor,,No,Personnel
+Education & Training Specialist,3F5X1,TSgt,1,1,1,1,1,1234587AB,6,PER,12347,,,,,1,0,,,,,,,,,,,,03,Personnel,Education & Training Specialist,,No,Personnel
+Finance Officer,65FX,Capt,1,1,1,1,1,1234588AB,6,FIN,12348,,,,,1,1,65FX,Capt,Taylor,***-**-1252,A,65FX,65FX,,,,,04,Finance,Finance Officer,,No,Finance
+Finance Manager,6F0X1,MSgt,1,1,1,1,1,1234589AB,6,FIN,12348,,,,,1,1,6F0X1,MSgt,Thomas,***-**-1253,A,6F0X1,6F0X1,,,,,04,Finance,Finance Manager,,No,Finance
+Finance Technician,6F0X1,TSgt,1,1,1,1,1,1234590AB,6,FIN,12348,,,,,2,1,6F0X1,TSgt,White,***-**-1254,A,6F0X1,6F0X1,,,,,04,Finance,Finance Technician,,No,Finance
+Finance Technician,6F0X1,SSgt,1,1,1,1,1,1234591AB,6,FIN,12348,,,,,2,2,6F0X1,SSgt,Clark,***-**-1255,A,6F0X1,6F0X1,,,,,04,Finance,Finance Technician,,No,Finance
+Finance Technician,6F0X1,SrA,1,1,1,1,1,1234592AB,6,FIN,12348,,,,,1,1,6F0X1,SrA,Robinson,***-**-1256,A,6F0X1,6F0X1,,,,,04,Finance,Finance Technician,,No,Finance
+Accounting & Finance Specialist,6F0X1,TSgt,1,1,1,1,1,1234593AB,6,FIN,12348,,,,,1,0,,,,,,,,,,,,04,Finance,Accounting & Finance Specialist,,No,Finance
+Logistics Readiness Officer,21LX,Maj,1,1,1,1,1,1234594AB,6,LOG,12349,,,,,1,0,,,,,,,,,,,,05,Logistics,Logistics Readiness Officer,,Yes,Logistics
+Logistics Superintendent,2S0X1,SMSgt,1,1,1,1,1,1234595AB,6,LOG,12349,,,,,1,1,2S0X1,SMSgt,Walker,***-**-1257,A,2S0X1,2S0X1,,,,,05,Logistics,Logistics Superintendent,,Yes,Logistics
+Supply Manager,2S0X1,MSgt,1,1,1,1,1,1234596AB,6,LOG,12349,,,,,2,1,2S0X1,MSgt,Hall,***-**-1258,A,2S0X1,2S0X1,,,,,05,Logistics,Supply Manager,,No,Logistics
+Supply Systems Analyst,2S0X1,TSgt,1,1,1,1,1,1234597AB,6,LOG,12349,,,,,2,2,2S0X1,TSgt,Allen,***-**-1259,A,2S0X1,2S0X1,,,,,05,Logistics,Supply Systems Analyst,,No,Logistics
+Supply Technician,2S0X1,SSgt,1,1,1,1,1,1234598AB,6,LOG,12349,,,,,3,2,2S0X1,SSgt,Young,***-**-1260,A,2S0X1,2S0X1,,,,,05,Logistics,Supply Technician,,No,Logistics
+Supply Technician,2S0X1,SrA,1,1,1,1,1,1234599AB,6,LOG,12349,,,,,2,2,2S0X1,SrA,King,***-**-1261,A,2S0X1,2S0X1,,,,,05,Logistics,Supply Technician,,No,Logistics
+Communications Officer,17DX,Capt,1,1,1,1,1,1234600AB,5,COM,12350,,,,,1,1,17DX,Capt,Carter,***-**-1262,A,17DX,17DX,,,,,06,Communications,Communications Officer,,Yes,Communications
+Communications Superintendent,3D0X2,MSgt,1,1,1,1,1,1234601AB,5,COM,12350,,,,,1,1,3D0X2,MSgt,Mitchell,***-**-1263,A,3D0X2,3D0X2,,,,,06,Communications,Communications Superintendent,,Yes,Communications
+Network Administrator,3D0X2,TSgt,1,1,1,1,1,1234602AB,5,COM,12350,,,,,2,1,3D0X2,TSgt,Perez,***-**-1264,A,3D0X2,3D0X2,,,,,06,Communications,Network Administrator,,No,Communications
+Cyber Systems Operations,3D0X2,TSgt,1,1,1,1,1,1234603AB,5,COM,12350,,CSO,,,1,1,3D0X2,TSgt,Turner,***-**-1265,A,3D0X2,3D0X2,,,,,06,Communications,Cyber Systems Operations,,No,Communications
+Medical Officer,43HX,Maj,1,1,1,1,1,1234604AB,6,MED,12351,,,,,1,0,,,,,,,,,,,,07,Medical,Medical Officer,,Yes,Medical
+Medical Administrator,4A0X1,MSgt,1,1,1,1,1,1234605AB,6,MED,12351,,,,,1,0,,,,,,,,,,,,07,Medical,Medical Administrator,,No,Medical
+Medical Technician,4N0X1,SSgt,1,1,1,1,1,1234606AB,6,MED,12351,,,,,2,1,4N0X1,SSgt,Evans,***-**-1266,A,4N0X1,4N0X1,,,,,07,Medical,Medical Technician,GAIN: 25 MAY 26,,No,Medical
+Security Forces Commander,31PX,Maj,1,1,1,1,1,1234607AB,5,SEC,12352,,,,,1,1,31PX,Maj,Reed,***-**-1267,A,31PX,31PX,,,,,08,Security,Security Forces Commander,,Yes,Security
+Security Forces Superintendent,3P0X1,SMSgt,1,1,1,1,1,1234608AB,6,SEC,12352,,,,,1,1,3P0X1,SMSgt,Cook,***-**-1268,A,3P0X1,3P0X1,,,,,08,Security,Security Forces Superintendent,,Yes,Security
+Security Forces NCO,3P0X1,MSgt,1,1,1,1,1,1234609AB,6,SEC,12352,,,,,2,1,3P0X1,MSgt,Morgan,***-**-1269,A,3P0X1,3P0X1,,,,,08,Security,Security Forces NCO,,No,Security
+Security Forces,3P0X1,TSgt,1,1,1,1,1,1234610AB,6,SEC,12352,,,,,3,3,3P0X1,TSgt,Bell,***-**-1270,A,3P0X1,3P0X1,,,,,08,Security,Security Forces,,No,Security
+Security Forces,3P0X1,SSgt,1,1,1,1,1,1234611AB,6,SEC,12352,,,,,4,3,3P0X1,SSgt,Murphy,***-**-1271,A,3P0X1,3P0X1,,,,,08,Security,Security Forces,,No,Security
+Intelligence Officer,14NX,Maj,1,1,1,1,1,1234612AB,5,INT,12353,,,,,1,1,14NX,Maj,Cooper,***-**-1272,A,14NX,14NX,,,,,09,Intelligence,Intelligence Officer,,Yes,Intelligence
+Intelligence Superintendent,1N0X1,MSgt,1,1,1,1,1,1234613AB,5,INT,12353,,,,,1,1,1N0X1,MSgt,Richardson,***-**-1273,A,1N0X1,1N0X1,,,,,09,Intelligence,Intelligence Superintendent,,No,Intelligence
+Intelligence Analyst,1N0X1,TSgt,1,1,1,1,1,1234614AB,5,INT,12353,,,,,2,2,1N0X1,TSgt,Cox,***-**-1274,A,1N0X1,1N0X1,,,,,09,Intelligence,Intelligence Analyst,,No,Intelligence
+Intelligence Analyst,1N0X1,SSgt,1,1,1,1,1,1234615AB,5,INT,12353,,,,,2,1,1N0X1,SSgt,Howard,***-**-1275,A,1N0X1,1N0X1,,,,,09,Intelligence,Intelligence Analyst,,No,Intelligence
+Public Affairs Officer,35PX,Capt,1,1,1,1,1,1234616AB,6,PA,12354,,,,,1,0,,,,,,,,,,,,10,Public Affairs,Public Affairs Officer,,No,Public Affairs
+Public Affairs Specialist,3N0X1,TSgt,1,1,1,1,1,1234617AB,6,PA,12354,,,,,1,1,3N0X1,TSgt,Torres,***-**-1276,A,3N0X1,3N0X1,,,,,10,Public Affairs,Public Affairs Specialist,,No,Public Affairs
+Chaplain,52RX,Lt Col,1,1,1,1,1,1234618AB,6,CHP,12355,,,,,1,1,52RX,Lt Col,Gray,***-**-1277,A,52RX,52RX,,,,,11,Chapel,Chaplain,,No,Chapel
+Chaplain Assistant,5R0X1,MSgt,1,1,1,1,1,1234619AB,6,CHP,12355,,,,,1,0,,,,,,,,,,,,11,Chapel,Chaplain Assistant,,No,Chapel
+Staff Judge Advocate,51JX,Lt Col,1,1,1,1,1,1234620AB,6,LEG,12356,,,,,1,1,51JX,Lt Col,Ramirez,***-**-1278,A,51JX,51JX,,,,,12,Legal,Staff Judge Advocate,,Yes,Legal
+Paralegal,5J0X1,MSgt,1,1,1,1,1,1234621AB,6,LEG,12356,,,,,1,1,5J0X1,MSgt,James,***-**-1279,A,5J0X1,5J0X1,,,,,12,Legal,Paralegal,,No,Legal
+Paralegal,5J0X1,TSgt,1,1,1,1,1,1234622AB,6,LEG,12356,,,,,1,1,5J0X1,TSgt,Watson,***-**-1280,A,5J0X1,5J0X1,,,,,12,Legal,Paralegal,,No,Legal
+Contracting Officer,64PX,Maj,1,1,1,1,1,1234623AB,6,CTR,12357,,,,,1,0,,,,,,,,,,,,13,Contracting,Contracting Officer,,No,Contracting
+Contracting Specialist,6C0X1,TSgt,1,1,1,1,1,1234624AB,6,CTR,12357,,,,,2,1,6C0X1,TSgt,Kelly,***-**-1281,A,6C0X1,6C0X1,,,,,13,Contracting,Contracting Specialist,,No,Contracting
+Civil Engineer Commander,32EX,Maj,1,1,1,1,1,1234625AB,6,CE,12358,,,,,1,1,32EX,Maj,Price,***-**-1282,A,32EX,32EX,,,,,14,Civil Engineering,Civil Engineer Commander,,Yes,Civil Engineering
+Engineering Superintendent,3E0X1,SMSgt,1,1,1,1,1,1234626AB,6,CE,12358,,,,,1,1,3E0X1,SMSgt,Bennett,***-**-1283,A,3E0X1,3E0X1,,,,,14,Civil Engineering,Engineering Superintendent,,No,Civil Engineering
+Electrical Systems,3E0X1,TSgt,1,1,1,1,1,1234627AB,6,CE,12358,,,,,2,2,3E0X1,TSgt,Wood,***-**-1284,A,3E0X1,3E0X1,,,,,14,Civil Engineering,Electrical Systems,,No,Civil Engineering
+Fire Chief,3E7X1,SMSgt,1,1,1,1,1,1234628AB,6,FIRE,12359,,,,,1,1,3E7X1,SMSgt,Jenkins,***-**-1285,A,3E7X1,3E7X1,,,,,15,Fire Department,Fire Chief,,Yes,Fire Department
+Fire Protection,3E7X1,TSgt,1,1,1,1,1,1234629AB,6,FIRE,12359,,,,,2,2,3E7X1,TSgt,Perry,***-**-1286,A,3E7X1,3E7X1,,,,,15,Fire Department,Fire Protection,,No,Fire Department
+Safety Officer,91SX,Maj,1,1,1,1,1,1234630AB,6,SAF,12360,,,,,1,0,,,,,,,,,,,,16,Safety,Safety Officer,,Yes,Safety
+Ground Safety Manager,1S0X1,MSgt,1,1,1,1,1,1234631AB,6,SAF,12360,,,,,1,1,1S0X1,MSgt,Patterson,***-**-1287,A,1S0X1,1S0X1,,,,,16,Safety,Ground Safety Manager,,No,Safety
