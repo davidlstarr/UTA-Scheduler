@@ -1,41 +1,41 @@
-Event,Time,Location,Name
-Roll Call,07:00-07:30,Squadron Room,John Doe
-EPB Review Session,08:00-09:00,Supervisor Office,John Doe
-PHA Appointment,09:00-09:30,MDG Clinic,John Doe
-GTC Refresher Training,10:00-11:00,Training Room,John Doe
-Overdue GTC Voucher,11:30-12:00,Finance Office,John Doe
-Commander's Call,13:00-14:00,Theater,John Doe
-EPB Documentation,14:30-15:30,Office,John Doe
-Formation,08:00-09:00,Parade Ground,John Doe
-Equipment Inspection,09:30-10:30,Hangar,John Doe
-Medical Review,11:00-11:30,MDG Clinic,John Doe
-EPB Feedback Meeting,13:00-14:00,Conference Room,John Doe
-CDC Training Course,14:30-16:00,Training Room,John Doe
-Roll Call,07:00-07:30,Squadron Room,Jane Smith
-Training Records Update,08:30-09:30,Office,Jane Smith
-GTC Refresher Training,10:00-11:00,Training Room,Jane Smith
-Overdue Travel Voucher,11:30-12:00,Finance Office,Jane Smith
-Commander's Call,13:00-14:00,Theater,Jane Smith
-EPB Review Session,14:30-15:30,Supervisor Office,Jane Smith
-Formation,08:00-09:00,Parade Ground,Jane Smith
-Dental Exam,10:00-11:00,MDG Clinic,Jane Smith
-EPB Feedback Meeting,13:00-14:00,Conference Room,Jane Smith
-EPB Documentation,14:30-15:30,Office,Jane Smith
-Roll Call,07:00-07:30,Squadron Room,Mike Johnson
-Safety Briefing,09:00-10:00,Conference Room,Mike Johnson
-GTC Refresher Training,10:00-11:00,Training Room,Mike Johnson
-Overdue GTC Voucher,11:30-12:00,Finance Office,Mike Johnson
-Commander's Call,13:00-14:00,Theater,Mike Johnson
-EPB Review Session,14:30-15:30,Supervisor Office,Mike Johnson
-Formation,08:00-09:00,Parade Ground,Mike Johnson
-PT Assessment,09:30-10:00,Fitness Center,Mike Johnson
-EPB Feedback Meeting,13:00-14:00,Conference Room,Mike Johnson
-Certification Training,14:30-16:00,Training Room,Mike Johnson
-Overdue EPB - Needs Attention,,Office,John Doe
-Outstanding Training - Past Due,,Office,John Doe
-Overdue GTC Voucher - Submit,14:00-15:00,Finance Office,John Doe
-Overdue EPB - Needs Attention,,Office,Jane Smith
-Pending EPB Review,,Office,Jane Smith
-Outstanding Training - Past Due,,Office,Jane Smith
-Overdue EPB - Needs Attention,,Office,Mike Johnson
-Missing Training Records,,Office,Mike Johnson
+Event,Time,Location,Name,Date
+Roll Call,07:00-07:30,Squadron Room,John Doe,2025-12-13
+EPB Review Session,08:00-09:00,Supervisor Office,John Doe,2025-12-13
+PHA Appointment,09:00-09:30,MDG Clinic,John Doe,2025-12-13
+GTC Refresher Training,10:00-11:00,Training Room,John Doe,2025-12-13
+Overdue GTC Voucher,11:30-12:00,Finance Office,John Doe,2025-12-13
+Commander's Call,13:00-14:00,Theater,John Doe,2025-12-13
+EPB Documentation,14:30-15:30,Office,John Doe,2025-12-13
+Formation,08:00-09:00,Parade Ground,John Doe,2025-12-14
+Equipment Inspection,09:30-10:30,Hangar,John Doe,2025-12-14
+Medical Review,11:00-11:30,MDG Clinic,John Doe,2025-12-14
+EPB Feedback Meeting,13:00-14:00,Conference Room,John Doe,2025-12-14
+CDC Training Course,14:30-16:00,Training Room,John Doe,2025-12-14
+Roll Call,07:00-07:30,Squadron Room,Jane Smith,2025-12-13
+Training Records Update,08:30-09:30,Office,Jane Smith,2025-12-13
+GTC Refresher Training,10:00-11:00,Training Room,Jane Smith,2025-12-13
+Overdue Travel Voucher,11:30-12:00,Finance Office,Jane Smith,2025-12-13
+Commander's Call,13:00-14:00,Theater,Jane Smith,2025-12-13
+EPB Review Session,14:30-15:30,Supervisor Office,Jane Smith,2025-12-13
+Formation,08:00-09:00,Parade Ground,Jane Smith,2025-12-14
+Dental Exam,10:00-11:00,MDG Clinic,Jane Smith,2025-12-14
+EPB Feedback Meeting,13:00-14:00,Conference Room,Jane Smith,2025-12-14
+EPB Documentation,14:30-15:30,Office,Jane Smith,2025-12-14
+Roll Call,07:00-07:30,Squadron Room,Mike Johnson,2025-12-13
+Safety Briefing,09:00-10:00,Conference Room,Mike Johnson,2025-12-13
+GTC Refresher Training,10:00-11:00,Training Room,Mike Johnson,2025-12-13
+Overdue GTC Voucher,11:30-12:00,Finance Office,Mike Johnson,2025-12-13
+Commander's Call,13:00-14:00,Theater,Mike Johnson,2025-12-13
+EPB Review Session,14:30-15:30,Supervisor Office,Mike Johnson,2025-12-13
+Formation,08:00-09:00,Parade Ground,Mike Johnson,2025-12-14
+PT Assessment,09:30-10:00,Fitness Center,Mike Johnson,2025-12-14
+EPB Feedback Meeting,13:00-14:00,Conference Room,Mike Johnson,2025-12-14
+Certification Training,14:30-16:00,Training Room,Mike Johnson,2025-12-14
+Overdue EPB - Needs Attention,,Office,John Doe,2025-12-15
+Outstanding Training - Past Due,,Office,John Doe,2025-12-15
+Overdue GTC Voucher - Submit,14:00-15:00,Finance Office,John Doe,2025-12-15
+Overdue EPB - Needs Attention,,Office,Jane Smith,2025-12-15
+Pending EPB Review,,Office,Jane Smith,2025-12-15
+Outstanding Training - Past Due,,Office,Jane Smith,2025-12-16
+Overdue EPB - Needs Attention,,Office,Mike Johnson,2025-12-16
+Missing Training Records,,Office,Mike Johnson,2025-12-16
