@@ -1,92 +1,323 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { useSchedule } from '../context/ScheduleContext'
-import { Upload, X, Users, Download, RefreshCw } from 'lucide-react'
-import * as XLSX from 'xlsx'
-import mermaid from 'mermaid'
+import React, { useState, useEffect, useRef } from "react";
+import { useSchedule } from "../context/ScheduleContext";
+import {
+  Upload,
+  X,
+  Users,
+  Download,
+  RefreshCw,
+  Edit2,
+  Trash2,
+  Plus,
+  Save,
+} from "lucide-react";
+import * as XLSX from "xlsx";
+import mermaid from "mermaid";
 
 const RecallRoster = () => {
-  const { recallRosterData, setRecallRosterData } = useSchedule()
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const [mermaidCode, setMermaidCode] = useState('')
-  const mermaidRef = useRef(null)
-  
+  const { recallRosterData, setRecallRosterData } = useSchedule();
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [mermaidCode, setMermaidCode] = useState("");
+  const mermaidRef = useRef(null);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editedPerson, setEditedPerson] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
   useEffect(() => {
-    mermaid.initialize({ 
+    mermaid.initialize({
       startOnLoad: true,
-      theme: 'default',
-      securityLevel: 'loose',
+      theme: "base",
+      securityLevel: "loose",
+      themeVariables: {
+        primaryColor: "#E8F4F8",
+        primaryTextColor: "#1a1a1a",
+        primaryBorderColor: "#0EA5E9",
+        lineColor: "#64748B",
+        secondaryColor: "#F1F5F9",
+        tertiaryColor: "#FFFFFF",
+        fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
+      },
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        curve: 'basis'
-      }
-    })
-  }, [])
-  
+        curve: "basis",
+        padding: 20,
+        nodeSpacing: 100,
+        rankSpacing: 120,
+      },
+    });
+  }, []);
+
   useEffect(() => {
     if (recallRosterData) {
-      const code = generateMermaidDiagram(recallRosterData)
-      setMermaidCode(code)
+      const code = generateMermaidDiagram(recallRosterData);
+      setMermaidCode(code);
     }
-  }, [recallRosterData])
-  
+  }, [recallRosterData]);
+
   useEffect(() => {
-    if (mermaidCode && mermaidRef.current) {
-      mermaidRef.current.innerHTML = mermaidCode
-      mermaid.contentLoaded()
-    }
-  }, [mermaidCode])
-  
-  const generateMermaidDiagram = (data) => {
-    // Build organizational hierarchy from data
-    // Assuming data has fields like: name, rank, supervisor, position, phone, email
-    
-    let diagram = 'graph TD\n'
-    const nodeMap = new Map()
-    let nodeId = 0
-    
-    // Create nodes for each person
-    data.forEach(person => {
-      const id = `N${nodeId++}`
-      const label = `${person.rank || ''} ${person.name || 'Unknown'}<br/>${person.position || ''}`
-      nodeMap.set(person.name, id)
-      diagram += `    ${id}["${label}"]\n`
-    })
-    
-    // Create relationships based on supervisor field
-    data.forEach(person => {
-      if (person.supervisor && person.name) {
-        const childId = nodeMap.get(person.name)
-        const parentId = nodeMap.get(person.supervisor)
-        if (childId && parentId) {
-          diagram += `    ${parentId} --> ${childId}\n`
+    const renderDiagram = async () => {
+      if (mermaidCode && mermaidRef.current) {
+        try {
+          // Clear previous content
+          mermaidRef.current.innerHTML = "";
+
+          // Create a unique ID for this render
+          const id = `mermaid-${Date.now()}`;
+
+          // Render the diagram
+          const { svg } = await mermaid.render(id, mermaidCode);
+          mermaidRef.current.innerHTML = svg;
+        } catch (error) {
+          console.error("Error rendering mermaid diagram:", error);
+          mermaidRef.current.innerHTML = `<div class="text-red-600 text-sm">Error rendering diagram. Please refresh.</div>`;
         }
       }
-    })
-    
-    // Add styling
-    diagram += '\n    classDef default fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#fff\n'
-    
-    return diagram
-  }
-  
+    };
+
+    renderDiagram();
+  }, [mermaidCode]);
+
+  const generateMermaidDiagram = (data) => {
+    // Build organizational hierarchy from data, grouped by shop
+    let diagram = "graph TD\n";
+    const nodeMap = new Map();
+    const nameToIdMap = new Map();
+    let nodeId = 0;
+
+    // Common military ranks to strip from names when matching
+    const ranks = [
+      "Lt Col",
+      "Col",
+      "Maj",
+      "Capt",
+      "Lt",
+      "CMSgt",
+      "SMSgt",
+      "MSgt",
+      "TSgt",
+      "SSgt",
+      "SrA",
+      "A1C",
+      "Amn",
+      "AB",
+    ];
+
+    // Helper function to normalize and strip rank from name
+    const normalizeName = (name) => {
+      if (!name) return "";
+      let normalized = name.trim();
+
+      for (const rank of ranks) {
+        const rankPattern = new RegExp(`^${rank}\\s+`, "i");
+        if (rankPattern.test(normalized)) {
+          normalized = normalized.replace(rankPattern, "");
+          break;
+        }
+      }
+
+      return normalized.toLowerCase().replace(/\s+/g, " ").trim();
+    };
+
+    // Group people by shop
+    const shopGroups = {};
+    data.forEach((person) => {
+      const shop = person.shop || "Unassigned";
+      if (!shopGroups[shop]) {
+        shopGroups[shop] = [];
+      }
+      shopGroups[shop].push(person);
+    });
+
+    // Create subgraphs for each shop
+    Object.keys(shopGroups)
+      .sort()
+      .forEach((shop, shopIdx) => {
+        const people = shopGroups[shop];
+        const subgraphId = `shop${shopIdx}`;
+
+        // Start subgraph
+        diagram += `\n    subgraph ${subgraphId}["${shop}"]\n`;
+        diagram += `        direction TB\n`;
+
+        // Create nodes for people in this shop
+        people.forEach((person) => {
+          const id = `N${nodeId++}`;
+          const rankLabel = person.rank ? `${person.rank} ` : "";
+          const positionLine = person.position ? `<br/>${person.position}` : "";
+          const phoneLine = person.phone ? `<br/>${person.phone}` : "";
+          const label = `${rankLabel}${
+            person.name || "Unknown"
+          }${positionLine}${phoneLine}`;
+
+          // Store multiple variations of the name for flexible matching
+          nodeMap.set(person.name, id);
+          nameToIdMap.set(normalizeName(person.name), id);
+
+          if (person.rank && person.name) {
+            const fullName = `${person.rank} ${person.name}`;
+            nodeMap.set(fullName, id);
+            nameToIdMap.set(normalizeName(fullName), id);
+          }
+
+          diagram += `        ${id}["${label}"]\n`;
+        });
+
+        diagram += `    end\n`;
+      });
+
+    // Second pass: Create relationships based on supervisor field
+    data.forEach((person) => {
+      if (person.supervisor && person.name) {
+        const childId = nodeMap.get(person.name);
+
+        let parentId = null;
+
+        // Try exact match
+        parentId = nodeMap.get(person.supervisor);
+
+        // Try normalized match
+        if (!parentId) {
+          const normalizedSupervisor = normalizeName(person.supervisor);
+          parentId = nameToIdMap.get(normalizedSupervisor);
+        }
+
+        // Create relationship if both nodes exist and they're different
+        if (childId && parentId && childId !== parentId) {
+          diagram += `    ${parentId} --> ${childId}\n`;
+        }
+      }
+    });
+
+    // Add styling with multiple node classes based on rank
+    diagram +=
+      "\n    classDef commander fill:#0EA5E9,stroke:#0284C7,stroke-width:2.5px,color:#FFFFFF,font-weight:bold,font-size:14px,rx:10,ry:10\n";
+    diagram +=
+      "    classDef senior fill:#38BDF8,stroke:#0EA5E9,stroke-width:2px,color:#FFFFFF,font-weight:600,font-size:13px,rx:8,ry:8\n";
+    diagram +=
+      "    classDef mid fill:#7DD3FC,stroke:#38BDF8,stroke-width:2px,color:#0C4A6E,font-size:12px,rx:8,ry:8\n";
+    diagram +=
+      "    classDef junior fill:#E0F2FE,stroke:#7DD3FC,stroke-width:2px,color:#0C4A6E,font-size:11px,rx:8,ry:8\n";
+
+    // Apply classes based on rank
+    data.forEach((person, idx) => {
+      const rank = person.rank?.toLowerCase() || "";
+      const id = `N${idx}`;
+
+      if (rank.includes("col") || rank.includes("commander")) {
+        diagram += `    class ${id} commander\n`;
+      } else if (
+        rank.includes("cmsgt") ||
+        rank.includes("smsgt") ||
+        rank.includes("maj")
+      ) {
+        diagram += `    class ${id} senior\n`;
+      } else if (
+        rank.includes("msgt") ||
+        rank.includes("tsgt") ||
+        rank.includes("capt")
+      ) {
+        diagram += `    class ${id} mid\n`;
+      } else {
+        diagram += `    class ${id} junior\n`;
+      }
+    });
+
+    // Style the subgraphs (shops)
+    diagram +=
+      "\n    style shop0 fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px\n";
+    Object.keys(shopGroups).forEach((_, idx) => {
+      if (idx > 0) {
+        diagram += `    style shop${idx} fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px\n`;
+      }
+    });
+
+    return diagram;
+  };
+
   const handleExportDiagram = () => {
     // Create a downloadable version of the diagram
-    const blob = new Blob([mermaidCode], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'recall-roster-diagram.mmd'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-  
+    const blob = new Blob([mermaidCode], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "recall-roster-diagram.mmd";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const startEditing = (person, index) => {
+    setEditingIndex(index);
+    setEditedPerson({ ...person });
+  };
+
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditedPerson(null);
+  };
+
+  const saveEdit = () => {
+    if (editedPerson && editingIndex !== null) {
+      const updatedData = [...recallRosterData];
+      updatedData[editingIndex] = editedPerson;
+      setRecallRosterData(updatedData);
+      setEditingIndex(null);
+      setEditedPerson(null);
+    }
+  };
+
+  const deletePerson = (index) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this person from the roster?"
+      )
+    ) {
+      const updatedData = recallRosterData.filter((_, idx) => idx !== index);
+      setRecallRosterData(updatedData);
+    }
+  };
+
+  const addPerson = (newPerson) => {
+    const updatedData = [...(recallRosterData || []), newPerson];
+    setRecallRosterData(updatedData);
+    setShowAddModal(false);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Print Header - Only visible when printing */}
+      <div className="hidden print:block">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-900">
+          <div className="flex items-center gap-4">
+            {/* Squadron Logo Placeholder */}
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-lg">
+              <div className="text-white text-center">
+                <div className="text-2xl font-bold">SQ</div>
+                <div className="text-xs">LOGO</div>
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Recall Roster
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Organization Chart & Contact Information
+              </p>
+            </div>
+          </div>
+          <div className="text-right text-sm text-gray-600">
+            <div className="font-semibold">
+              Printed: {new Date().toLocaleDateString()}
+            </div>
+            <div>For Official Use Only</div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Recall Roster</h1>
           <p className="mt-2 text-gray-600">
@@ -97,6 +328,20 @@ const RecallRoster = () => {
           {recallRosterData && (
             <>
               <button
+                onClick={() => setShowAddModal(true)}
+                className="btn-primary flex items-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Person
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="btn-secondary flex items-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Print
+              </button>
+              <button
                 onClick={handleExportDiagram}
                 className="btn-secondary flex items-center"
               >
@@ -104,8 +349,18 @@ const RecallRoster = () => {
                 Export Diagram
               </button>
               <button
-                onClick={() => {
-                  mermaid.contentLoaded()
+                onClick={async () => {
+                  if (recallRosterData && mermaidRef.current) {
+                    try {
+                      mermaidRef.current.innerHTML = "";
+                      const code = generateMermaidDiagram(recallRosterData);
+                      const id = `mermaid-refresh-${Date.now()}`;
+                      const { svg } = await mermaid.render(id, code);
+                      mermaidRef.current.innerHTML = svg;
+                    } catch (error) {
+                      console.error("Error refreshing diagram:", error);
+                    }
+                  }
                 }}
                 className="btn-secondary flex items-center"
               >
@@ -116,21 +371,24 @@ const RecallRoster = () => {
           )}
           <button
             onClick={() => setShowUploadModal(true)}
-            className="btn-primary flex items-center"
+            className="btn-secondary flex items-center"
           >
             <Upload className="h-4 w-4 mr-2" />
             Upload Roster
           </button>
         </div>
       </div>
-      
+
       {/* Content */}
       {!recallRosterData ? (
         <div className="card text-center py-16">
           <Users className="h-20 w-20 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No Recall Roster Data</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            No Recall Roster Data
+          </h3>
           <p className="text-gray-600 mb-6">
-            Upload a spreadsheet containing your recall roster to generate an organizational diagram
+            Upload a spreadsheet containing your recall roster to generate an
+            organizational diagram
           </p>
           <button
             onClick={() => setShowUploadModal(true)}
@@ -143,38 +401,83 @@ const RecallRoster = () => {
       ) : (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:hidden">
             <div className="card">
-              <p className="text-sm font-medium text-gray-600">Total Personnel</p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{recallRosterData.length}</p>
+              <p className="text-sm font-medium text-gray-600">
+                Total Personnel
+              </p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {recallRosterData.length}
+              </p>
             </div>
             <div className="card">
               <p className="text-sm font-medium text-gray-600">Unique Ranks</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
-                {new Set(recallRosterData.map(p => p.rank).filter(Boolean)).size}
+                {
+                  new Set(recallRosterData.map((p) => p.rank).filter(Boolean))
+                    .size
+                }
               </p>
             </div>
             <div className="card">
               <p className="text-sm font-medium text-gray-600">Positions</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
-                {new Set(recallRosterData.map(p => p.position).filter(Boolean)).size}
+                {
+                  new Set(
+                    recallRosterData.map((p) => p.position).filter(Boolean)
+                  ).size
+                }
               </p>
             </div>
           </div>
-          
+
           {/* Mermaid Diagram */}
-          <div className="card">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Organization Chart</h2>
-            <div className="bg-gray-50 rounded-lg p-6 overflow-x-auto">
-              <div ref={mermaidRef} className="mermaid flex justify-center"></div>
+          <div className="card print:shadow-none print:border-0">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 print:text-2xl">
+              Organization Chart
+            </h2>
+            <div className="bg-white rounded-lg p-8 overflow-x-auto border border-gray-200 print:border-0 print:p-4">
+              <div
+                ref={mermaidRef}
+                className="mermaid flex justify-center min-h-[400px]"
+              ></div>
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-6 text-sm flex-wrap print:hidden">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-md bg-sky-500 border-2 border-sky-600"></div>
+                <span className="text-gray-700">Commander/Officer</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-md bg-sky-400 border-2 border-sky-500"></div>
+                <span className="text-gray-700">Senior NCO</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-md bg-sky-300 border-2 border-sky-400"></div>
+                <span className="text-gray-700">Mid-Level NCO</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-md bg-sky-100 border-2 border-sky-300"></div>
+                <span className="text-gray-700">Junior Enlisted</span>
+              </div>
             </div>
           </div>
-          
+
           {/* Roster Table */}
-          <div className="card">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Roster Details</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+          <div className="card print:shadow-none print:border-0 print:break-before-page">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 print:text-2xl">
+                Roster Details
+              </h2>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="btn-primary flex items-center print:hidden"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Person
+              </button>
+            </div>
+            <div className="overflow-x-auto print:overflow-visible">
+              <table className="min-w-full divide-y divide-gray-200 print:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -187,6 +490,9 @@ const RecallRoster = () => {
                       Position
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Shop
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Supervisor
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -195,140 +501,226 @@ const RecallRoster = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Email
                     </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider print:hidden">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {recallRosterData.map((person, idx) => (
                     <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {person.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {person.rank}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {person.position}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {person.supervisor || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {person.phone || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {person.email || '-'}
-                      </td>
+                      {editingIndex === idx ? (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editedPerson.name}
+                              onChange={(e) =>
+                                setEditedPerson({
+                                  ...editedPerson,
+                                  name: e.target.value,
+                                })
+                              }
+                              className="input-field py-1 px-2 text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editedPerson.rank}
+                              onChange={(e) =>
+                                setEditedPerson({
+                                  ...editedPerson,
+                                  rank: e.target.value,
+                                })
+                              }
+                              className="input-field py-1 px-2 text-sm w-20"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editedPerson.position}
+                              onChange={(e) =>
+                                setEditedPerson({
+                                  ...editedPerson,
+                                  position: e.target.value,
+                                })
+                              }
+                              className="input-field py-1 px-2 text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editedPerson.shop || ""}
+                              onChange={(e) =>
+                                setEditedPerson({
+                                  ...editedPerson,
+                                  shop: e.target.value,
+                                })
+                              }
+                              className="input-field py-1 px-2 text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editedPerson.supervisor || ""}
+                              onChange={(e) =>
+                                setEditedPerson({
+                                  ...editedPerson,
+                                  supervisor: e.target.value,
+                                })
+                              }
+                              className="input-field py-1 px-2 text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editedPerson.phone || ""}
+                              onChange={(e) =>
+                                setEditedPerson({
+                                  ...editedPerson,
+                                  phone: e.target.value,
+                                })
+                              }
+                              className="input-field py-1 px-2 text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <input
+                              type="text"
+                              value={editedPerson.email || ""}
+                              onChange={(e) =>
+                                setEditedPerson({
+                                  ...editedPerson,
+                                  email: e.target.value,
+                                })
+                              }
+                              className="input-field py-1 px-2 text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium print:hidden">
+                            <button
+                              onClick={saveEdit}
+                              className="text-green-600 hover:text-green-900 mr-3"
+                              title="Save"
+                            >
+                              <Save className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="text-gray-600 hover:text-gray-900"
+                              title="Cancel"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {person.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {person.rank}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {person.position}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {person.shop || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {person.supervisor || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {person.phone || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {person.email || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium print:hidden">
+                            <button
+                              onClick={() => startEditing(person, idx)}
+                              className="text-blue-600 hover:text-blue-900 mr-3"
+                              title="Edit"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => deletePerson(idx)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
+
+          {/* Add Person Button - below table for easy access */}
+          <div className="flex justify-center print:hidden">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="btn-primary flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Person
+            </button>
+          </div>
         </>
       )}
-      
+
       {/* Upload Modal */}
       {showUploadModal && (
         <RecallRosterUpload onClose={() => setShowUploadModal(false)} />
       )}
-    </div>
-  )
-}
 
-const RecallRosterUpload = ({ onClose }) => {
-  const { setRecallRosterData } = useSchedule()
-  const [file, setFile] = useState(null)
-  const [preview, setPreview] = useState(null)
-  const [error, setError] = useState(null)
-  
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-      setError(null)
-      parseFile(selectedFile)
+      {/* Add Person Modal */}
+      {showAddModal && (
+        <AddPersonModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={addPerson}
+        />
+      )}
+    </div>
+  );
+};
+
+const AddPersonModal = ({ onClose, onAdd }) => {
+  const [newPerson, setNewPerson] = useState({
+    name: "",
+    rank: "",
+    position: "",
+    shop: "",
+    supervisor: "",
+    phone: "",
+    email: "",
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (newPerson.name) {
+      onAdd(newPerson);
     }
-  }
-  
-  const parseFile = (file) => {
-    const reader = new FileReader()
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result)
-        const workbook = XLSX.read(data, { type: 'array' })
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet)
-        
-        if (jsonData.length === 0) {
-          setError('The file appears to be empty')
-          return
-        }
-        
-        // Transform data to match our roster structure
-        const transformedData = jsonData.map(row => ({
-          name: row['Name'] || row['name'] || '',
-          rank: row['Rank'] || row['rank'] || '',
-          position: row['Position'] || row['position'] || row['Title'] || '',
-          supervisor: row['Supervisor'] || row['supervisor'] || row['Reports To'] || '',
-          phone: row['Phone'] || row['phone'] || row['Phone Number'] || '',
-          email: row['Email'] || row['email'] || row['Email Address'] || '',
-        }))
-        
-        setPreview(transformedData.slice(0, 5))
-      } catch (err) {
-        setError('Error parsing file. Please ensure it\'s a valid Excel or CSV file.')
-        console.error(err)
-      }
-    }
-    
-    reader.onerror = () => {
-      setError('Error reading file')
-    }
-    
-    reader.readAsArrayBuffer(file)
-  }
-  
-  const handleImport = () => {
-    if (!preview) return
-    
-    const reader = new FileReader()
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result)
-        const workbook = XLSX.read(data, { type: 'array' })
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet)
-        
-        const transformedData = jsonData.map(row => ({
-          name: row['Name'] || row['name'] || '',
-          rank: row['Rank'] || row['rank'] || '',
-          position: row['Position'] || row['position'] || row['Title'] || '',
-          supervisor: row['Supervisor'] || row['supervisor'] || row['Reports To'] || '',
-          phone: row['Phone'] || row['phone'] || row['Phone Number'] || '',
-          email: row['Email'] || row['email'] || row['Email Address'] || '',
-        }))
-        
-        setRecallRosterData(transformedData)
-        onClose()
-      } catch (err) {
-        setError('Error importing data')
-        console.error(err)
-      }
-    }
-    
-    reader.readAsArrayBuffer(file)
-  }
-  
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div className="flex items-center">
-            <Upload className="h-6 w-6 text-primary-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">Upload Recall Roster</h2>
+            <Plus className="h-6 w-6 text-primary-600 mr-3" />
+            <h2 className="text-2xl font-bold text-gray-900">Add Person</h2>
           </div>
           <button
             onClick={onClose}
@@ -337,7 +729,219 @@ const RecallRosterUpload = ({ onClose }) => {
             <X className="h-6 w-6" />
           </button>
         </div>
-        
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={newPerson.name}
+              onChange={(e) =>
+                setNewPerson({ ...newPerson, name: e.target.value })
+              }
+              className="input-field"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Rank
+              </label>
+              <input
+                type="text"
+                value={newPerson.rank}
+                onChange={(e) =>
+                  setNewPerson({ ...newPerson, rank: e.target.value })
+                }
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Position
+              </label>
+              <input
+                type="text"
+                value={newPerson.position}
+                onChange={(e) =>
+                  setNewPerson({ ...newPerson, position: e.target.value })
+                }
+                className="input-field"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Supervisor
+            </label>
+            <input
+              type="text"
+              value={newPerson.supervisor}
+              onChange={(e) =>
+                setNewPerson({ ...newPerson, supervisor: e.target.value })
+              }
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone
+            </label>
+            <input
+              type="text"
+              value={newPerson.phone}
+              onChange={(e) =>
+                setNewPerson({ ...newPerson, phone: e.target.value })
+              }
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={newPerson.email}
+              onChange={(e) =>
+                setNewPerson({ ...newPerson, email: e.target.value })
+              }
+              className="input-field"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              Add Person
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const RecallRosterUpload = ({ onClose }) => {
+  const { setRecallRosterData } = useSchedule();
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setError(null);
+      parseFile(selectedFile);
+    }
+  };
+
+  const parseFile = (file) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+        if (jsonData.length === 0) {
+          setError("The file appears to be empty");
+          return;
+        }
+
+        // Transform data to match our roster structure
+        const transformedData = jsonData.map((row) => ({
+          name: row["Name"] || row["name"] || "",
+          rank: row["Rank"] || row["rank"] || "",
+          position: row["Position"] || row["position"] || row["Title"] || "",
+          shop: row["Shop"] || row["shop"] || row["Office"] || "",
+          supervisor:
+            row["Supervisor"] || row["supervisor"] || row["Reports To"] || "",
+          phone: row["Phone"] || row["phone"] || row["Phone Number"] || "",
+          email: row["Email"] || row["email"] || row["Email Address"] || "",
+        }));
+
+        setPreview(transformedData.slice(0, 5));
+      } catch (err) {
+        setError(
+          "Error parsing file. Please ensure it's a valid Excel or CSV file."
+        );
+        console.error(err);
+      }
+    };
+
+    reader.onerror = () => {
+      setError("Error reading file");
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleImport = () => {
+    if (!preview) return;
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+        const transformedData = jsonData.map((row) => ({
+          name: row["Name"] || row["name"] || "",
+          rank: row["Rank"] || row["rank"] || "",
+          position: row["Position"] || row["position"] || row["Title"] || "",
+          shop: row["Shop"] || row["shop"] || row["Office"] || "",
+          supervisor:
+            row["Supervisor"] || row["supervisor"] || row["Reports To"] || "",
+          phone: row["Phone"] || row["phone"] || row["Phone Number"] || "",
+          email: row["Email"] || row["email"] || row["Email Address"] || "",
+        }));
+
+        setRecallRosterData(transformedData);
+        onClose();
+      } catch (err) {
+        setError("Error importing data");
+        console.error(err);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <div className="flex items-center">
+            <Upload className="h-6 w-6 text-primary-600 mr-3" />
+            <h2 className="text-2xl font-bold text-gray-900">
+              Upload Recall Roster
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
           {/* Upload Area */}
@@ -352,43 +956,68 @@ const RecallRosterUpload = ({ onClose }) => {
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary-500 transition-colors cursor-pointer">
                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-lg font-medium text-gray-900 mb-1">
-                  {file ? file.name : 'Click to upload or drag and drop'}
+                  {file ? file.name : "Click to upload or drag and drop"}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Excel (.xlsx, .xls) or CSV files with columns: Name, Rank, Position, Supervisor, Phone, Email
+                  Excel (.xlsx, .xls) or CSV files with columns: Name, Rank,
+                  Position, Shop, Supervisor, Phone, Email
                 </p>
               </div>
             </label>
           </div>
-          
+
           {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
-          
+
           {/* Preview */}
           {preview && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Preview (First 5 rows)</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Preview (First 5 rows)
+              </h3>
               <div className="overflow-x-auto border border-gray-200 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supervisor</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Rank
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Position
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Shop
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Supervisor
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {preview.map((row, idx) => (
                       <tr key={idx}>
-                        <td className="px-4 py-3 text-sm text-gray-900">{row.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{row.rank}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{row.position}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{row.supervisor}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {row.name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {row.rank}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {row.position}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {row.shop}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {row.supervisor}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -397,7 +1026,7 @@ const RecallRosterUpload = ({ onClose }) => {
             </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
           <button onClick={onClose} className="btn-secondary">
@@ -413,14 +1042,7 @@ const RecallRosterUpload = ({ onClose }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default RecallRoster
-
-
-
-
-
-
-
+export default RecallRoster;

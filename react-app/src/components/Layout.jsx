@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
             <div className="flex items-center">
               <Calendar className="h-8 w-8 text-primary-600" />
               <h1 className="ml-3 text-2xl font-bold text-gray-900">
-                UTA Scheduler
+                UTA One Stop Shop
               </h1>
             </div>
             <nav className="hidden md:flex space-x-8">
@@ -84,7 +84,8 @@ const Layout = ({ children }) => {
       <footer className="bg-white border-t border-gray-200 mt-12 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <p className="text-center text-sm text-gray-500">
-            © 2025 UTA Scheduler. Built for efficient military scheduling.
+            © 2025 UTA One Stop Shop. Built for efficient military training
+            management.
           </p>
         </div>
       </footer>

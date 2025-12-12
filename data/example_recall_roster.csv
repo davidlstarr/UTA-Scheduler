@@ -1,7 +1,8 @@
 Name,Phone,Supervisor
-CC Jones,555-0001,
-MSgt Brown,555-1111,CC Jones
-MSgt Davis,555-2222,CC Jones
+CC Jones,555-0001
+CMSgt Tester, 666-0009, CC Jones
+MSgt Brown,555-1111,CMSgt Tester
+MSgt Davis,555-2222,CMSgt Tester
 SSgt Smith,555-3333,MSgt Brown
 SSgt Wilson,555-4444,MSgt Brown
 SSgt Martinez,555-5555,MSgt Davis

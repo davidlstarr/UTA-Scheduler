@@ -239,6 +239,36 @@
   .rounded-full {
     border-radius: 2px !important;
   }
+
+  /* Recall Roster specific print styles */
+  .mermaid svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Break page before roster details table */
+  .print\\:break-before-page {
+    page-break-before: always;
+  }
+
+  /* Squadron logo print styles */
+  .print\\:block .w-20 {
+    width: 3rem !important;
+    height: 3rem !important;
+  }
+  
+  /* Ensure org chart colors print correctly */
+  svg rect,
+  svg path,
+  svg text {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Compact org chart for print */
+  .mermaid {
+    font-size: 9pt !important;
+  }
 }
 
 

@@ -77,6 +77,17 @@ const Schedule = () => {
   const filteredEvents = useMemo(() => {
     let filtered = events;
 
+    // Filter out completed EPBs
+    filtered = filtered.filter((event) => {
+      if (event.type === "epb") {
+        const isComplete =
+          event.status?.toLowerCase() === "complete" ||
+          event.status?.toLowerCase() === "completed";
+        return !isComplete;
+      }
+      return true;
+    });
+
     if (selectedPerson) {
       filtered = filtered.filter((event) => event.person === selectedPerson);
     }
@@ -139,7 +150,7 @@ const Schedule = () => {
       <div className="hidden print:block">
         <div className="text-center mb-4 pb-3 border-b-2 border-gray-900">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Unit Training Assembly (UTA) Schedule
+            Training Schedule
           </h1>
           <div className="text-sm text-gray-800 space-y-1">
             {printHeader.unit && (
@@ -148,7 +159,7 @@ const Schedule = () => {
             <div className="flex justify-center items-center gap-4 mt-2">
               {printHeader.utaWeekend && (
                 <p className="font-medium">
-                  UTA Weekend:{" "}
+                  Training Period:{" "}
                   <span className="font-bold">{printHeader.utaWeekend}</span>
                 </p>
               )}
@@ -510,15 +521,21 @@ const Schedule = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium print:hidden">
-                        {event.isManual && (
-                          <button
-                            onClick={() => removeEvent(event.id)}
-                            className="text-red-600 hover:text-red-900 transition-colors"
-                            title="Delete event"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Are you sure you want to delete "${event.title}"?`
+                              )
+                            ) {
+                              removeEvent(event.id);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                          title="Delete event"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -585,14 +602,14 @@ const Schedule = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  UTA Weekend
+                  Training Period / UTA Weekend
                 </label>
                 <input
                   type="text"
                   name="utaWeekend"
                   defaultValue={printHeader.utaWeekend}
                   className="input-field"
-                  placeholder="e.g., 13-14 Dec 2025"
+                  placeholder="e.g., 13-14 Dec 2025 or January 2025"
                 />
               </div>
 
