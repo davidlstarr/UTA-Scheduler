@@ -328,13 +328,6 @@ const RecallRoster = () => {
           {recallRosterData && (
             <>
               <button
-                onClick={() => setShowAddModal(true)}
-                className="btn-primary flex items-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Person
-              </button>
-              <button
                 onClick={() => window.print()}
                 className="btn-secondary flex items-center"
               >
@@ -349,23 +342,21 @@ const RecallRoster = () => {
                 Export Diagram
               </button>
               <button
-                onClick={async () => {
-                  if (recallRosterData && mermaidRef.current) {
-                    try {
-                      mermaidRef.current.innerHTML = "";
-                      const code = generateMermaidDiagram(recallRosterData);
-                      const id = `mermaid-refresh-${Date.now()}`;
-                      const { svg } = await mermaid.render(id, code);
-                      mermaidRef.current.innerHTML = svg;
-                    } catch (error) {
-                      console.error("Error refreshing diagram:", error);
-                    }
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Are you sure you want to clear the recall roster? This will remove all personnel data and cannot be undone."
+                    )
+                  ) {
+                    setRecallRosterData(null);
+                    setEditingRowId(null);
+                    setEditFormData({});
                   }
                 }}
-                className="btn-secondary flex items-center"
+                className="btn-secondary flex items-center text-red-600 hover:text-red-700 hover:bg-red-50"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                <X className="h-4 w-4 mr-2" />
+                Clear Roster
               </button>
             </>
           )}
@@ -846,81 +837,243 @@ const RecallRosterUpload = ({ onClose }) => {
     }
   };
 
+  const parseMermaidFile = (content) => {
+    const lines = content.split("\n");
+    const people = new Map();
+    const relationships = [];
+
+    lines.forEach((line) => {
+      // Match node definitions: person1["Rank Name<br/>Position<br/>Phone"]
+      const nodeMatch = line.match(/(\w+)\["([^"]+)"\]/);
+      if (nodeMatch) {
+        const [, id, content] = nodeMatch;
+        const parts = content.split("<br/>");
+
+        let rank = "";
+        let name = "";
+        let position = "";
+        let phone = "";
+
+        if (parts.length >= 1) {
+          // First part contains rank and name
+          const firstPart = parts[0].trim();
+          const nameParts = firstPart.split(" ");
+          // Assume first word is rank if it's a common military rank
+          const ranks = [
+            "Pvt",
+            "PFC",
+            "Spc",
+            "Cpl",
+            "Sgt",
+            "SSgt",
+            "SFC",
+            "MSG",
+            "SGM",
+            "Lt",
+            "Capt",
+            "Maj",
+            "Col",
+            "Gen",
+            "AB",
+            "Amn",
+            "A1C",
+            "SrA",
+            "TSgt",
+            "MSgt",
+            "SMSgt",
+            "CMSgt",
+            "2Lt",
+            "1Lt",
+            "BGen",
+            "MGen",
+            "LtGen",
+            "Lt Col",
+            "Brig Gen",
+          ];
+
+          const firstWord = nameParts[0];
+          if (ranks.some((r) => firstWord.includes(r))) {
+            rank = nameParts[0];
+            name = nameParts.slice(1).join(" ");
+          } else {
+            name = firstPart;
+          }
+        }
+        if (parts.length >= 2) position = parts[1].trim();
+        if (parts.length >= 3) phone = parts[2].trim();
+
+        people.set(id, {
+          id,
+          rank,
+          name,
+          position,
+          phone,
+          email: "",
+          shop: "",
+          supervisor: "",
+        });
+      }
+
+      // Match relationships: person2 --> person1
+      const relMatch = line.match(/(\w+)\s*-->\s*(\w+)/);
+      if (relMatch) {
+        const [, subordinate, supervisor] = relMatch;
+        relationships.push({ subordinate, supervisor });
+      }
+    });
+
+    // Apply supervisor relationships
+    relationships.forEach(({ subordinate, supervisor }) => {
+      if (people.has(subordinate) && people.has(supervisor)) {
+        const sub = people.get(subordinate);
+        const sup = people.get(supervisor);
+        sub.supervisor = sup.name;
+      }
+    });
+
+    // Extract shop info from subgraphs if present
+    let currentShop = "";
+    lines.forEach((line) => {
+      const shopMatch = line.match(/subgraph\s+\w+\["([^"]+)"\]/);
+      if (shopMatch) {
+        currentShop = shopMatch[1];
+      } else if (line.trim() === "end") {
+        currentShop = "";
+      } else if (currentShop) {
+        const nodeMatch = line.match(/(\w+)\[/);
+        if (nodeMatch && people.has(nodeMatch[1])) {
+          people.get(nodeMatch[1]).shop = currentShop;
+        }
+      }
+    });
+
+    return Array.from(people.values());
+  };
+
   const parseFile = (file) => {
     const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+    // Check if it's a Mermaid file
+    if (file.name.endsWith(".mmd")) {
+      reader.onload = (e) => {
+        try {
+          const content = e.target.result;
+          const transformedData = parseMermaidFile(content);
 
-        if (jsonData.length === 0) {
-          setError("The file appears to be empty");
-          return;
+          if (transformedData.length === 0) {
+            setError("No personnel data found in the Mermaid file");
+            return;
+          }
+
+          setPreview(transformedData.slice(0, 5));
+        } catch (err) {
+          setError(
+            "Error parsing Mermaid file. Please ensure it's a valid .mmd file."
+          );
+          console.error(err);
         }
+      };
 
-        // Transform data to match our roster structure
-        const transformedData = jsonData.map((row) => ({
-          name: row["Name"] || row["name"] || "",
-          rank: row["Rank"] || row["rank"] || "",
-          position: row["Position"] || row["position"] || row["Title"] || "",
-          shop: row["Shop"] || row["shop"] || row["Office"] || "",
-          supervisor:
-            row["Supervisor"] || row["supervisor"] || row["Reports To"] || "",
-          phone: row["Phone"] || row["phone"] || row["Phone Number"] || "",
-          email: row["Email"] || row["email"] || row["Email Address"] || "",
-        }));
+      reader.onerror = () => {
+        setError("Error reading file");
+      };
 
-        setPreview(transformedData.slice(0, 5));
-      } catch (err) {
-        setError(
-          "Error parsing file. Please ensure it's a valid Excel or CSV file."
-        );
-        console.error(err);
-      }
-    };
+      reader.readAsText(file);
+    } else {
+      // Handle Excel/CSV files
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-    reader.onerror = () => {
-      setError("Error reading file");
-    };
+          if (jsonData.length === 0) {
+            setError("The file appears to be empty");
+            return;
+          }
 
-    reader.readAsArrayBuffer(file);
+          // Transform data to match our roster structure
+          const transformedData = jsonData.map((row) => ({
+            name: row["Name"] || row["name"] || "",
+            rank: row["Rank"] || row["rank"] || "",
+            position: row["Position"] || row["position"] || row["Title"] || "",
+            shop: row["Shop"] || row["shop"] || row["Office"] || "",
+            supervisor:
+              row["Supervisor"] || row["supervisor"] || row["Reports To"] || "",
+            phone: row["Phone"] || row["phone"] || row["Phone Number"] || "",
+            email: row["Email"] || row["email"] || row["Email Address"] || "",
+          }));
+
+          setPreview(transformedData.slice(0, 5));
+        } catch (err) {
+          setError(
+            "Error parsing file. Please ensure it's a valid Excel or CSV file."
+          );
+          console.error(err);
+        }
+      };
+
+      reader.onerror = () => {
+        setError("Error reading file");
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
   };
 
   const handleImport = () => {
     if (!preview) return;
 
-    const reader = new FileReader();
+    if (file.name.endsWith(".mmd")) {
+      // Import from Mermaid file
+      const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+      reader.onload = (e) => {
+        try {
+          const content = e.target.result;
+          const transformedData = parseMermaidFile(content);
+          setRecallRosterData(transformedData);
+          onClose();
+        } catch (err) {
+          setError("Error importing Mermaid data");
+          console.error(err);
+        }
+      };
 
-        const transformedData = jsonData.map((row) => ({
-          name: row["Name"] || row["name"] || "",
-          rank: row["Rank"] || row["rank"] || "",
-          position: row["Position"] || row["position"] || row["Title"] || "",
-          shop: row["Shop"] || row["shop"] || row["Office"] || "",
-          supervisor:
-            row["Supervisor"] || row["supervisor"] || row["Reports To"] || "",
-          phone: row["Phone"] || row["phone"] || row["Phone Number"] || "",
-          email: row["Email"] || row["email"] || row["Email Address"] || "",
-        }));
+      reader.readAsText(file);
+    } else {
+      // Import from Excel/CSV
+      const reader = new FileReader();
 
-        setRecallRosterData(transformedData);
-        onClose();
-      } catch (err) {
-        setError("Error importing data");
-        console.error(err);
-      }
-    };
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-    reader.readAsArrayBuffer(file);
+          const transformedData = jsonData.map((row) => ({
+            name: row["Name"] || row["name"] || "",
+            rank: row["Rank"] || row["rank"] || "",
+            position: row["Position"] || row["position"] || row["Title"] || "",
+            shop: row["Shop"] || row["shop"] || row["Office"] || "",
+            supervisor:
+              row["Supervisor"] || row["supervisor"] || row["Reports To"] || "",
+            phone: row["Phone"] || row["phone"] || row["Phone Number"] || "",
+            email: row["Email"] || row["email"] || row["Email Address"] || "",
+          }));
+
+          setRecallRosterData(transformedData);
+          onClose();
+        } catch (err) {
+          setError("Error importing data");
+          console.error(err);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
   };
 
   return (
@@ -949,7 +1102,7 @@ const RecallRosterUpload = ({ onClose }) => {
             <label className="block w-full">
               <input
                 type="file"
-                accept=".xlsx,.xls,.csv"
+                accept=".xlsx,.xls,.csv,.mmd"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -959,8 +1112,8 @@ const RecallRosterUpload = ({ onClose }) => {
                   {file ? file.name : "Click to upload or drag and drop"}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Excel (.xlsx, .xls) or CSV files with columns: Name, Rank,
-                  Position, Shop, Supervisor, Phone, Email
+                  Excel (.xlsx, .xls), CSV, or Mermaid (.mmd) files with
+                  columns: Name, Rank, Position, Shop, Supervisor, Phone, Email
                 </p>
               </div>
             </label>

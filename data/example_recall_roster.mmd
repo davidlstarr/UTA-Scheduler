@@ -1,0 +1,53 @@
+flowchart TB
+    person1["Lt Col Jones<br/>Commander<br/>555-0101"]
+    person2["CMSgt Williams<br/>Command Chief<br/>555-0102"]
+    person3["Maj Martinez<br/>Operations Officer<br/>555-0103"]
+    person4["TSgt Davis<br/>Unit Training Manager<br/>555-0104"]
+    person5["Capt Anderson<br/>Deputy Operations Officer<br/>555-0105"]
+    person6["SSgt Brown<br/>Operations NCO<br/>555-0106"]
+    person7["Capt Taylor<br/>Personnel Officer<br/>555-0107"]
+    person8["MSgt Smith<br/>Personnel Superintendent<br/>555-0108"]
+    person9["TSgt Jackson<br/>Personnel Specialist<br/>555-0109"]
+    person10["SSgt Lee<br/>Personnel Specialist<br/>555-0110"]
+
+    subgraph shop0["Command Section"]
+        direction TB
+        person1
+        person2
+    end
+
+    subgraph shop1["Operations"]
+        direction TB
+        person3
+        person4
+        person5
+        person6
+    end
+
+    subgraph shop2["Personnel"]
+        direction TB
+        person7
+        person8
+        person9
+        person10
+    end
+
+    person2 --> person1
+    person3 --> person1
+    person4 --> person3
+    person5 --> person3
+    person6 --> person5
+    person7 --> person1
+    person8 --> person7
+    person9 --> person8
+    person10 --> person8
+
+    classDef commander fill:#1e40af,stroke:#1e3a8a,stroke-width:3px,color:#fff,font-weight:bold,font-size:14px,rx:10,ry:10
+    classDef senior fill:#3b82f6,stroke:#2563eb,stroke-width:2.5px,color:#fff,font-weight:bold,font-size:13px,rx:8,ry:8
+    classDef mid fill:#60a5fa,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a,font-weight:600,font-size:12px,rx:6,ry:6
+    classDef junior fill:#93c5fd,stroke:#60a5fa,stroke-width:1.5px,color:#1e3a8a,font-size:11px,rx:5,ry:5
+
+    class person1 commander
+    class person2,person3,person7 senior
+    class person4,person5,person8 mid
+    class person6,person9,person10 junior
