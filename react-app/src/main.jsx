@@ -1,5 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import './jspdf-setup'
+import 'jspdf-autotable'
 import App from './App.jsx'
 import './index.css'
 

@@ -13,9 +13,15 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  FileArchive,
+  Loader2,
+  FileSpreadsheet,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import mermaid from "mermaid";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
+import JSZip from "jszip";
 
 const RecallRoster = () => {
   const { recallRosterData, setRecallRosterData } = useSchedule();
@@ -29,12 +35,14 @@ const RecallRoster = () => {
   const [chartSize, setChartSize] = useState(null);
   const chartContainerRef = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [downloadingPdfs, setDownloadingPdfs] = useState(false);
 
   useEffect(() => {
     mermaid.initialize({
       startOnLoad: true,
       theme: "base",
       securityLevel: "loose",
+      maxTextSize: 200000,
       themeVariables: {
         primaryColor: "#E8F4F8",
         primaryTextColor: "#1a1a1a",
@@ -198,15 +206,19 @@ const RecallRoster = () => {
         diagram += `\n    subgraph ${subgraphId}["${shop}"]\n`;
         diagram += `        direction TB\n`;
 
-        // Create nodes for people in this shop
+        // Create nodes for people in this shop (truncate long text to avoid maxTextSize)
+        const truncate = (s, maxLen = 35) =>
+          s && s.length > maxLen ? s.slice(0, maxLen) + "…" : s || "";
+        const escapeLabel = (s) => String(s).replace(/"/g, "#quot;");
         people.forEach((person) => {
           const id = `N${nodeId++}`;
-          const rankLabel = person.rank ? `${person.rank} ` : "";
-          const positionLine = person.position ? `<br/>${person.position}` : "";
-          const phoneLine = person.phone ? `<br/>${person.phone}` : "";
-          const label = `${rankLabel}${
-            person.name || "Unknown"
-          }${positionLine}${phoneLine}`;
+          const rankLabel = escapeLabel(person.rank ? `${person.rank} ` : "");
+          const pos = escapeLabel(truncate(person.position, 40));
+          const positionLine = pos ? `<br/>${pos}` : "";
+          const ph = escapeLabel(truncate(person.phone, 20));
+          const phoneLine = ph ? `<br/>${ph}` : "";
+          const namePart = escapeLabel(person.name || "Unknown");
+          const label = `${rankLabel}${namePart}${positionLine}${phoneLine}`;
 
           // Store multiple variations of the name for flexible matching
           nodeMap.set(person.name, id);
@@ -307,6 +319,163 @@ const RecallRoster = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportExcel = () => {
+    if (!recallRosterData || recallRosterData.length === 0) return;
+    const rows = recallRosterData.map((p) => ({
+      Name: p.name ?? "",
+      Rank: p.rank ?? "",
+      Position: p.position ?? "",
+      Shop: p.shop ?? "",
+      Supervisor: p.supervisor ?? "",
+      Phone: p.phone ?? "",
+      Email: p.email ?? "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Recall Roster");
+    XLSX.writeFile(wb, `recall-roster-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const svgToPngDataUrl = (svgString) => {
+    return new Promise((resolve, reject) => {
+      let svg = svgString;
+      const viewBoxMatch = svg.match(/viewBox=["']?([\d.\s-]+)["']?/);
+      if (viewBoxMatch && !/width\s*=/.test(svg)) {
+        const parts = viewBoxMatch[1].trim().split(/\s+/).map(Number);
+        const w = parts[2];
+        const h = parts[3];
+        if (w && h) {
+          const insert = svg.indexOf(">");
+          svg = svg.slice(0, insert) + ` width="${w}" height="${h}"` + svg.slice(insert);
+        }
+      }
+      const encoded = btoa(unescape(encodeURIComponent(svg)));
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const w = Math.max(1, img.naturalWidth || 400);
+          const h = Math.max(1, img.naturalHeight || 300);
+          const canvas = document.createElement("canvas");
+          const scale = 2;
+          canvas.width = w * scale;
+          canvas.height = h * scale;
+          const ctx = canvas.getContext("2d");
+          ctx.scale(scale, scale);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => reject(new Error("SVG to image failed"));
+      img.src = `data:image/svg+xml;base64,${encoded}`;
+    });
+  };
+
+  const placeholderPngDataUrl =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAHEQG/v5gYzQAAAABJRU5ErkJggg==";
+
+  const sanitizeFilename = (name) => {
+    return String(name).replace(/[<>:"/\\|?*]/g, "-").trim() || "Unassigned";
+  };
+
+  const handleDownloadAllPdfs = async () => {
+    if (!recallRosterData || recallRosterData.length === 0) return;
+    const shops = [
+      ...new Set(recallRosterData.map((p) => p.shop || "Unassigned")),
+    ].sort();
+    if (shops.length === 0) return;
+
+    setDownloadingPdfs(true);
+    const zip = new JSZip();
+
+    try {
+      for (const shopName of shops) {
+        const shopPeople = recallRosterData.filter(
+          (p) => (p.shop || "Unassigned") === shopName
+        );
+        if (shopPeople.length === 0) continue;
+
+        const code = generateMermaidDiagram(shopPeople);
+        const id = `mermaid-pdf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        let svg;
+        try {
+          const result = await mermaid.render(id, code);
+          svg = result.svg;
+        } catch {
+          svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="60"><text x="20" y="40" fill="#b91c1c">Diagram could not be rendered</text></svg>`;
+        }
+
+        let pngDataUrl;
+        try {
+          pngDataUrl = await svgToPngDataUrl(svg);
+        } catch (imgErr) {
+          console.warn("SVG to PNG failed for shop", shopName, imgErr);
+          pngDataUrl = placeholderPngDataUrl;
+        }
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        const pageW = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        const contentW = pageW - margin * 2;
+        let y = margin;
+
+        doc.setFontSize(16);
+        doc.text(`Recall Roster – ${shopName}`, margin, y);
+        y += 8;
+        doc.setFontSize(10);
+        doc.text(`Organization chart & contact information • Printed: ${new Date().toLocaleDateString()}`, margin, y);
+        y += 12;
+
+        const imgW = contentW;
+        const maxImgH = doc.internal.pageSize.getHeight() - margin - y - 30;
+        const imgH = Math.min(maxImgH, (imgW * 3) / 4);
+        try {
+          doc.addImage(pngDataUrl, "PNG", margin, y, imgW, imgH);
+        } catch (imgErr) {
+          console.warn("addImage failed for shop", shopName, imgErr);
+        }
+        y += imgH + 12;
+
+        doc.autoTable({
+          startY: y,
+          head: [["Name", "Rank", "Position", "Supervisor", "Phone", "Email"]],
+          body: shopPeople.map((p) => [
+            String(p.name ?? ""),
+            String(p.rank ?? ""),
+            String(p.position ?? ""),
+            String(p.supervisor ?? ""),
+            String(p.phone ?? ""),
+            String(p.email ?? ""),
+          ]),
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 8 },
+          headStyles: { fontSize: 8 },
+        });
+
+        const pdfBlob = doc.output("arraybuffer");
+        const safeName = sanitizeFilename(shopName);
+        zip.file(`${safeName}.pdf`, pdfBlob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Recall-Roster-by-Shop-${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download PDFs error:", err);
+      const msg = err?.message || String(err);
+      alert(`Something went wrong generating the PDFs. ${msg ? `Error: ${msg}` : "Please try again."}`);
+    } finally {
+      setDownloadingPdfs(false);
+    }
+  };
+
   const startEditing = (person, index) => {
     setEditingIndex(index);
     setEditedPerson({ ...person });
@@ -330,7 +499,7 @@ const RecallRoster = () => {
   const deletePerson = (index) => {
     if (
       window.confirm(
-        "Are you sure you want to delete this person from the roster?"
+        "Are you sure you want to delete this person from the roster?",
       )
     ) {
       const updatedData = recallRosterData.filter((_, idx) => idx !== index);
@@ -389,9 +558,10 @@ const RecallRoster = () => {
               <button
                 onClick={() => window.print()}
                 className="btn-secondary flex items-center"
+                title="Print or save as PDF from the print dialog"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Print
+                Print / Save as PDF
               </button>
               <button
                 onClick={handleExportDiagram}
@@ -401,10 +571,31 @@ const RecallRoster = () => {
                 Export Diagram
               </button>
               <button
+                onClick={handleExportExcel}
+                className="btn-secondary flex items-center"
+                title="Download roster details as Excel (.xlsx)"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Export to Excel
+              </button>
+              <button
+                onClick={handleDownloadAllPdfs}
+                disabled={downloadingPdfs}
+                className="btn-secondary flex items-center disabled:opacity-60 disabled:cursor-not-allowed"
+                title="Download a ZIP with one PDF per shop"
+              >
+                {downloadingPdfs ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileArchive className="h-4 w-4 mr-2" />
+                )}
+                {downloadingPdfs ? "Generating…" : "Download all PDFs (ZIP)"}
+              </button>
+              <button
                 onClick={() => {
                   if (
                     window.confirm(
-                      "Are you sure you want to clear the recall roster? This will remove all personnel data and cannot be undone."
+                      "Are you sure you want to clear the recall roster? This will remove all personnel data and cannot be undone.",
                     )
                   ) {
                     setRecallRosterData(null);
@@ -474,7 +665,7 @@ const RecallRoster = () => {
               <p className="mt-2 text-3xl font-bold text-gray-900">
                 {
                   new Set(
-                    recallRosterData.map((p) => p.position).filter(Boolean)
+                    recallRosterData.map((p) => p.position).filter(Boolean),
                   ).size
                 }
               </p>
@@ -531,12 +722,8 @@ const RecallRoster = () => {
               <div
                 className="org-chart-zoom-container flex justify-center origin-top"
                 style={{
-                  width: chartSize
-                    ? chartSize.width * chartZoom
-                    : "100%",
-                  minHeight: chartSize
-                    ? chartSize.height * chartZoom
-                    : 400,
+                  width: chartSize ? chartSize.width * chartZoom : "100%",
+                  minHeight: chartSize ? chartSize.height * chartZoom : 400,
                 }}
               >
                 <div
@@ -1088,7 +1275,7 @@ const RecallRosterUpload = ({ onClose }) => {
           setPreview(transformedData.slice(0, 5));
         } catch (err) {
           setError(
-            "Error parsing Mermaid file. Please ensure it's a valid .mmd file."
+            "Error parsing Mermaid file. Please ensure it's a valid .mmd file.",
           );
           console.error(err);
         }
@@ -1128,7 +1315,7 @@ const RecallRosterUpload = ({ onClose }) => {
           setPreview(transformedData.slice(0, 5));
         } catch (err) {
           setError(
-            "Error parsing file. Please ensure it's a valid Excel or CSV file."
+            "Error parsing file. Please ensure it's a valid Excel or CSV file.",
           );
           console.error(err);
         }

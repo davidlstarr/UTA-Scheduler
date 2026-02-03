@@ -269,15 +269,6 @@
   .mermaid {
     font-size: 9pt !important;
   }
-
-  /* Reset org chart zoom for print */
-  .org-chart-zoom-wrapper {
-    transform: none !important;
-  }
-  .org-chart-zoom-container > div {
-    width: 100% !important;
-    min-height: auto !important;
-  }
 }
 
 
