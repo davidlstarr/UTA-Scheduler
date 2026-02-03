@@ -44,11 +44,11 @@ const RecallRoster = () => {
       securityLevel: "loose",
       maxTextSize: 200000,
       themeVariables: {
-        primaryColor: "#E8F4F8",
-        primaryTextColor: "#1a1a1a",
-        primaryBorderColor: "#0EA5E9",
+        primaryColor: "#1e3a5f",
+        primaryTextColor: "#FFFFFF",
+        primaryBorderColor: "#eab308",
         lineColor: "#64748B",
-        secondaryColor: "#F1F5F9",
+        secondaryColor: "#1e3a5f",
         tertiaryColor: "#FFFFFF",
         fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
       },
@@ -261,13 +261,13 @@ const RecallRoster = () => {
 
     // Add styling with multiple node classes based on rank
     diagram +=
-      "\n    classDef commander fill:#0EA5E9,stroke:#0284C7,stroke-width:2.5px,color:#FFFFFF,font-weight:bold,font-size:14px,rx:10,ry:10\n";
+      "\n    classDef commander fill:#1e3a5f,stroke:#eab308,stroke-width:2.5px,color:#FFFFFF,font-weight:bold,font-size:14px,rx:10,ry:10\n";
     diagram +=
-      "    classDef senior fill:#38BDF8,stroke:#0EA5E9,stroke-width:2px,color:#FFFFFF,font-weight:600,font-size:13px,rx:8,ry:8\n";
+      "    classDef senior fill:#1e3a5f,stroke:#eab308,stroke-width:2px,color:#FFFFFF,font-weight:600,font-size:13px,rx:8,ry:8\n";
     diagram +=
-      "    classDef mid fill:#7DD3FC,stroke:#38BDF8,stroke-width:2px,color:#0C4A6E,font-size:12px,rx:8,ry:8\n";
+      "    classDef mid fill:#1e3a5f,stroke:#eab308,stroke-width:2px,color:#FFFFFF,font-size:12px,rx:8,ry:8\n";
     diagram +=
-      "    classDef junior fill:#E0F2FE,stroke:#7DD3FC,stroke-width:2px,color:#0C4A6E,font-size:11px,rx:8,ry:8\n";
+      "    classDef junior fill:#1e3a5f,stroke:#eab308,stroke-width:2px,color:#FFFFFF,font-size:11px,rx:8,ry:8\n";
 
     // Apply classes based on rank
     data.forEach((person, idx) => {
@@ -295,10 +295,10 @@ const RecallRoster = () => {
 
     // Style the subgraphs (shops)
     diagram +=
-      "\n    style shop0 fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px\n";
+      "\n    style shop0 fill:#f8fafc,stroke:#eab308,stroke-width:2px\n";
     Object.keys(shopGroups).forEach((_, idx) => {
       if (idx > 0) {
-        diagram += `    style shop${idx} fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px\n`;
+        diagram += `    style shop${idx} fill:#f8fafc,stroke:#eab308,stroke-width:2px\n`;
       }
     });
 
@@ -333,7 +333,10 @@ const RecallRoster = () => {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Recall Roster");
-    XLSX.writeFile(wb, `recall-roster-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(
+      wb,
+      `recall-roster-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
   };
 
   const svgToPngDataUrl = (svgString) => {
@@ -346,7 +349,10 @@ const RecallRoster = () => {
         const h = parts[3];
         if (w && h) {
           const insert = svg.indexOf(">");
-          svg = svg.slice(0, insert) + ` width="${w}" height="${h}"` + svg.slice(insert);
+          svg =
+            svg.slice(0, insert) +
+            ` width="${w}" height="${h}"` +
+            svg.slice(insert);
         }
       }
       const encoded = btoa(unescape(encodeURIComponent(svg)));
@@ -376,7 +382,11 @@ const RecallRoster = () => {
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAHEQG/v5gYzQAAAABJRU5ErkJggg==";
 
   const sanitizeFilename = (name) => {
-    return String(name).replace(/[<>:"/\\|?*]/g, "-").trim() || "Unassigned";
+    return (
+      String(name)
+        .replace(/[<>:"/\\|?*]/g, "-")
+        .trim() || "Unassigned"
+    );
   };
 
   const handleDownloadAllPdfs = async () => {
@@ -392,7 +402,7 @@ const RecallRoster = () => {
     try {
       for (const shopName of shops) {
         const shopPeople = recallRosterData.filter(
-          (p) => (p.shop || "Unassigned") === shopName
+          (p) => (p.shop || "Unassigned") === shopName,
         );
         if (shopPeople.length === 0) continue;
 
@@ -413,7 +423,11 @@ const RecallRoster = () => {
           console.warn("SVG to PNG failed for shop", shopName, imgErr);
           pngDataUrl = placeholderPngDataUrl;
         }
-        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        const doc = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
         const pageW = doc.internal.pageSize.getWidth();
         const margin = 15;
         const contentW = pageW - margin * 2;
@@ -423,7 +437,11 @@ const RecallRoster = () => {
         doc.text(`Recall Roster – ${shopName}`, margin, y);
         y += 8;
         doc.setFontSize(10);
-        doc.text(`Organization chart & contact information • Printed: ${new Date().toLocaleDateString()}`, margin, y);
+        doc.text(
+          `Organization chart & contact information • Printed: ${new Date().toLocaleDateString()}`,
+          margin,
+          y,
+        );
         y += 12;
 
         const imgW = contentW;
@@ -470,7 +488,9 @@ const RecallRoster = () => {
     } catch (err) {
       console.error("Download PDFs error:", err);
       const msg = err?.message || String(err);
-      alert(`Something went wrong generating the PDFs. ${msg ? `Error: ${msg}` : "Please try again."}`);
+      alert(
+        `Something went wrong generating the PDFs. ${msg ? `Error: ${msg}` : "Please try again."}`,
+      );
     } finally {
       setDownloadingPdfs(false);
     }
@@ -742,20 +762,11 @@ const RecallRoster = () => {
             </div>
             <div className="mt-4 flex items-center justify-center gap-6 text-sm flex-wrap print:hidden">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-md bg-sky-500 border-2 border-sky-600"></div>
-                <span className="text-gray-700">Commander/Officer</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-md bg-sky-400 border-2 border-sky-500"></div>
-                <span className="text-gray-700">Senior NCO</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-md bg-sky-300 border-2 border-sky-400"></div>
-                <span className="text-gray-700">Mid-Level NCO</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-md bg-sky-100 border-2 border-sky-300"></div>
-                <span className="text-gray-700">Junior Enlisted</span>
+                <div
+                  className="w-4 h-4 rounded-md border-2"
+                  style={{ backgroundColor: "#1e3a5f", borderColor: "#eab308" }}
+                />
+                <span className="text-gray-700">Node style (all ranks)</span>
               </div>
             </div>
           </div>
