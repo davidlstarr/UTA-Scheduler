@@ -10,6 +10,9 @@ import {
   Trash2,
   Plus,
   Save,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import mermaid from "mermaid";
@@ -17,11 +20,15 @@ import mermaid from "mermaid";
 const RecallRoster = () => {
   const { recallRosterData, setRecallRosterData } = useSchedule();
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [mermaidCode, setMermaidCode] = useState("");
   const mermaidRef = useRef(null);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editedPerson, setEditedPerson] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [chartZoom, setChartZoom] = useState(1);
+  const [chartPan, setChartPan] = useState({ x: 0, y: 0 });
+  const [chartSize, setChartSize] = useState(null);
+  const chartContainerRef = useRef(null);
+  const [isPanning, setIsPanning] = useState(false);
 
   useEffect(() => {
     mermaid.initialize({
@@ -38,7 +45,7 @@ const RecallRoster = () => {
         fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
       },
       flowchart: {
-        useMaxWidth: true,
+        useMaxWidth: false,
         htmlLabels: true,
         curve: "basis",
         padding: 20,
@@ -49,34 +56,85 @@ const RecallRoster = () => {
   }, []);
 
   useEffect(() => {
-    if (recallRosterData) {
-      const code = generateMermaidDiagram(recallRosterData);
-      setMermaidCode(code);
-    }
-  }, [recallRosterData]);
+    if (!recallRosterData || !mermaidRef.current) return;
 
-  useEffect(() => {
+    const code = generateMermaidDiagram(recallRosterData);
+
     const renderDiagram = async () => {
-      if (mermaidCode && mermaidRef.current) {
-        try {
-          // Clear previous content
-          mermaidRef.current.innerHTML = "";
+      try {
+        setChartSize(null);
+        setChartPan({ x: 0, y: 0 });
+        mermaidRef.current.innerHTML = "";
 
-          // Create a unique ID for this render
-          const id = `mermaid-${Date.now()}`;
+        const id = `mermaid-${Date.now()}`;
+        const { svg } = await mermaid.render(id, code);
+        mermaidRef.current.innerHTML = svg;
 
-          // Render the diagram
-          const { svg } = await mermaid.render(id, mermaidCode);
-          mermaidRef.current.innerHTML = svg;
-        } catch (error) {
-          console.error("Error rendering mermaid diagram:", error);
-          mermaidRef.current.innerHTML = `<div class="text-red-600 text-sm">Error rendering diagram. Please refresh.</div>`;
-        }
+        const measure = () => {
+          const svgEl = mermaidRef.current?.querySelector("svg");
+          if (svgEl) {
+            const rect = svgEl.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+              setChartSize({ width: rect.width, height: rect.height });
+            } else {
+              const vb = svgEl.viewBox?.baseVal;
+              const w = vb?.width || svgEl.clientWidth || 800;
+              const h = vb?.height || svgEl.clientHeight || 600;
+              setChartSize({ width: w, height: h });
+            }
+          }
+        };
+        requestAnimationFrame(measure);
+        setTimeout(measure, 50);
+        setTimeout(measure, 300);
+      } catch (error) {
+        console.error("Error rendering mermaid diagram:", error);
+        mermaidRef.current.innerHTML = `<div class="text-red-600 text-sm">Error rendering diagram. Please refresh.</div>`;
       }
     };
 
     renderDiagram();
-  }, [mermaidCode]);
+  }, [recallRosterData]);
+
+  const zoomIn = () =>
+    setChartZoom((z) => Math.min(2, Math.round((z + 0.25) * 100) / 100));
+  const zoomOut = () =>
+    setChartZoom((z) => Math.max(0.5, Math.round((z - 0.25) * 100) / 100));
+  const zoomReset = () => {
+    setChartZoom(1);
+    setChartPan({ x: 0, y: 0 });
+  };
+
+  const handleChartPanStart = (e) => {
+    if (e.button !== 0 || !recallRosterData) return;
+    e.preventDefault();
+    setIsPanning(true);
+    const startClientX = e.clientX;
+    const startClientY = e.clientY;
+    const startPanX = chartPan.x;
+    const startPanY = chartPan.y;
+
+    const onMove = (e) => {
+      setChartPan({
+        x: startPanX + (e.clientX - startClientX),
+        y: startPanY + (e.clientY - startClientY),
+      });
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      setIsPanning(false);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
+  const handleChartWheel = (e) => {
+    if (!e.ctrlKey || !recallRosterData) return;
+    e.preventDefault();
+    if (e.deltaY < 0) zoomIn();
+    else if (e.deltaY > 0) zoomOut();
+  };
 
   const generateMermaidDiagram = (data) => {
     // Build organizational hierarchy from data, grouped by shop
@@ -236,8 +294,9 @@ const RecallRoster = () => {
   };
 
   const handleExportDiagram = () => {
-    // Create a downloadable version of the diagram
-    const blob = new Blob([mermaidCode], { type: "text/plain" });
+    if (!recallRosterData) return;
+    const code = generateMermaidDiagram(recallRosterData);
+    const blob = new Blob([code], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -424,14 +483,75 @@ const RecallRoster = () => {
 
           {/* Mermaid Diagram */}
           <div className="card print:shadow-none print:border-0">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 print:text-2xl">
-              Organization Chart
-            </h2>
-            <div className="bg-white rounded-lg p-8 overflow-x-auto border border-gray-200 print:border-0 print:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4 print:block">
+              <h2 className="text-xl font-semibold text-gray-900 print:text-2xl">
+                Organization Chart
+              </h2>
+              <div className="flex items-center gap-2 print:hidden">
+                <span className="text-sm text-gray-500 mr-1">Zoom:</span>
+                <button
+                  type="button"
+                  onClick={zoomOut}
+                  disabled={chartZoom <= 0.5}
+                  className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Zoom out"
+                >
+                  <ZoomOut className="h-4 w-4 text-gray-700" />
+                </button>
+                <span className="text-sm font-medium text-gray-700 min-w-[3rem] text-center">
+                  {Math.round(chartZoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={zoomIn}
+                  disabled={chartZoom >= 2}
+                  className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Zoom in"
+                >
+                  <ZoomIn className="h-4 w-4 text-gray-700" />
+                </button>
+                <button
+                  type="button"
+                  onClick={zoomReset}
+                  className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                  title="Reset zoom and pan"
+                >
+                  <RotateCcw className="h-4 w-4 text-gray-700" />
+                </button>
+              </div>
+            </div>
+            <div
+              ref={chartContainerRef}
+              className={`bg-white rounded-lg border border-gray-200 print:border-0 print:p-4 overflow-auto min-h-[400px] max-h-[70vh] select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+              onWheel={handleChartWheel}
+              onMouseDown={handleChartPanStart}
+              role="application"
+              aria-label="Organization chart, drag to pan, use controls to zoom"
+            >
               <div
-                ref={mermaidRef}
-                className="mermaid flex justify-center min-h-[400px]"
-              ></div>
+                className="org-chart-zoom-container flex justify-center origin-top"
+                style={{
+                  width: chartSize
+                    ? chartSize.width * chartZoom
+                    : "100%",
+                  minHeight: chartSize
+                    ? chartSize.height * chartZoom
+                    : 400,
+                }}
+              >
+                <div
+                  className="org-chart-zoom-wrapper"
+                  style={{
+                    transform: `translate(${chartPan.x}px, ${chartPan.y}px) scale(${chartZoom})`,
+                    transformOrigin: "top center",
+                  }}
+                >
+                  <div
+                    ref={mermaidRef}
+                    className="mermaid flex justify-center min-h-[400px]"
+                  />
+                </div>
+              </div>
             </div>
             <div className="mt-4 flex items-center justify-center gap-6 text-sm flex-wrap print:hidden">
               <div className="flex items-center gap-2">
