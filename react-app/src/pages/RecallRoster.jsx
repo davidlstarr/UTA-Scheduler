@@ -34,6 +34,7 @@ const RecallRoster = () => {
   const [chartPan, setChartPan] = useState({ x: 0, y: 0 });
   const [chartSize, setChartSize] = useState(null);
   const chartContainerRef = useRef(null);
+  const autoFitDoneRef = useRef(false);
   const [isPanning, setIsPanning] = useState(false);
   const [downloadingPdfs, setDownloadingPdfs] = useState(false);
 
@@ -70,8 +71,10 @@ const RecallRoster = () => {
 
     const renderDiagram = async () => {
       try {
+        autoFitDoneRef.current = false;
         setChartSize(null);
         setChartPan({ x: 0, y: 0 });
+        setChartZoom(1);
         mermaidRef.current.innerHTML = "";
 
         const id = `mermaid-${Date.now()}`;
@@ -82,13 +85,44 @@ const RecallRoster = () => {
           const svgEl = mermaidRef.current?.querySelector("svg");
           if (svgEl) {
             const rect = svgEl.getBoundingClientRect();
-            if (rect.width > 0 && rect.height > 0) {
-              setChartSize({ width: rect.width, height: rect.height });
+            const diagramW = rect.width > 0 ? rect.width : null;
+            const diagramH = rect.height > 0 ? rect.height : null;
+
+            if (diagramW && diagramH) {
+              setChartSize({ width: diagramW, height: diagramH });
             } else {
               const vb = svgEl.viewBox?.baseVal;
               const w = vb?.width || svgEl.clientWidth || 800;
               const h = vb?.height || svgEl.clientHeight || 600;
               setChartSize({ width: w, height: h });
+            }
+
+            // Auto-fit initial zoom once per render
+            if (!autoFitDoneRef.current && chartContainerRef.current) {
+              const containerRect =
+                chartContainerRef.current.getBoundingClientRect();
+              const availableW = Math.max(0, containerRect.width - 32);
+              const availableH = Math.max(0, containerRect.height - 32);
+
+              const baseW = diagramW ?? svgEl.clientWidth ?? 800;
+              const baseH = diagramH ?? svgEl.clientHeight ?? 600;
+
+              const rawFit =
+                baseW > 0 && baseH > 0
+                  ? Math.min(1, availableW / baseW, availableH / baseH)
+                  : 1;
+
+              const STEP = 0.25;
+              const MIN_ZOOM = 0.25;
+              const fit =
+                Math.max(
+                  MIN_ZOOM,
+                  Math.min(1, Math.floor(rawFit / STEP) * STEP)
+                ) || 1;
+
+              setChartZoom(fit);
+              setChartPan({ x: 0, y: 0 });
+              autoFitDoneRef.current = true;
             }
           }
         };
@@ -104,10 +138,16 @@ const RecallRoster = () => {
     renderDiagram();
   }, [recallRosterData]);
 
+  const MIN_ZOOM = 0.25;
+  const MAX_ZOOM = 2;
   const zoomIn = () =>
-    setChartZoom((z) => Math.min(2, Math.round((z + 0.25) * 100) / 100));
+    setChartZoom((z) =>
+      Math.min(MAX_ZOOM, Math.round((z + 0.25) * 100) / 100)
+    );
   const zoomOut = () =>
-    setChartZoom((z) => Math.max(0.5, Math.round((z - 0.25) * 100) / 100));
+    setChartZoom((z) =>
+      Math.max(MIN_ZOOM, Math.round((z - 0.25) * 100) / 100)
+    );
   const zoomReset = () => {
     setChartZoom(1);
     setChartPan({ x: 0, y: 0 });
