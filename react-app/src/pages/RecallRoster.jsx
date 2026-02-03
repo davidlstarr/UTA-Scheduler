@@ -56,7 +56,7 @@ const RecallRoster = () => {
       flowchart: {
         useMaxWidth: false,
         htmlLabels: true,
-        curve: "basis",
+        curve: "step",
         padding: 20,
         nodeSpacing: 100,
         rankSpacing: 120,
