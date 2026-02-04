@@ -56,7 +56,7 @@ const RecallRoster = () => {
       flowchart: {
         useMaxWidth: false,
         htmlLabels: true,
-        curve: "step",
+        curve: "basis",
         padding: 20,
         nodeSpacing: 100,
         rankSpacing: 120,
@@ -117,7 +117,7 @@ const RecallRoster = () => {
               const fit =
                 Math.max(
                   MIN_ZOOM,
-                  Math.min(1, Math.floor(rawFit / STEP) * STEP)
+                  Math.min(1, Math.floor(rawFit / STEP) * STEP),
                 ) || 1;
 
               setChartZoom(fit);
@@ -141,13 +141,9 @@ const RecallRoster = () => {
   const MIN_ZOOM = 0.25;
   const MAX_ZOOM = 2;
   const zoomIn = () =>
-    setChartZoom((z) =>
-      Math.min(MAX_ZOOM, Math.round((z + 0.25) * 100) / 100)
-    );
+    setChartZoom((z) => Math.min(MAX_ZOOM, Math.round((z + 0.25) * 100) / 100));
   const zoomOut = () =>
-    setChartZoom((z) =>
-      Math.max(MIN_ZOOM, Math.round((z - 0.25) * 100) / 100)
-    );
+    setChartZoom((z) => Math.max(MIN_ZOOM, Math.round((z - 0.25) * 100) / 100));
   const zoomReset = () => {
     setChartZoom(1);
     setChartPan({ x: 0, y: 0 });
